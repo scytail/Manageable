@@ -1,8 +1,8 @@
 # Manageable
 
-A friendly, easy-to-use discord management bot that can be set up in a flash.
+A friendly, easy-to-use discord management bot.
 
-Created by Ben Schwabe, originally for a worldbuilding Discord server.
+Created by Ben Schwabe, originally for a worldbuilding Discord server. Feature backlog can be found [here](https://trello.com/b/RgsfkGX1/manageable)
 
 # Command List
 Currently, Manageable has these commands:

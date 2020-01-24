@@ -1,0 +1,14 @@
+{
+  "token": "TOKEN_GOES_HERE",
+  "command_prefix": "!",
+  "mod_roles": ["Admin_role_here","Another_admin_role_here","etc"],
+  "help_commands_per_page": 3,
+
+  "content": {
+    "codex_links": {
+      "color": "#8934eb",
+      "world_anvil": "https://www.worldanvil.com/w/EXAMPLE",
+      "google_doc": "https://docs.google.com/document/d/EXAMPLE"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "title": "Command List",
+  "description": "Prefix: `{prefix}`",
+  "color": "#9e9e55",
+  "command_list": {
+    "help": {
+      "command": "help",
+      "description": "DMs this message to the requester. Please do `help <command>` to get more details."
+    },
+    "codex": {
+      "command": "codex",
+      "description": "Posts a few links in chat to help users find information about the UTOverse."
+    },
+    "warn": {
+      "command": "warn <action> <target_user>",
+      "description": "Performs the specified action to the targeted user. **Mod roles only**.",
+      "details": [
+        {
+          "parameter": "action: increase",
+          "description": "Increment the user's warning level by one."
+        },
+        {
+          "parameter": "action: decrease",
+          "description": "Decrement the user's warning level by one."
+        },
+        {
+          "parameter": "action: view",
+          "description": "View the user's current warning level."
+        }
+      ]
+    }
+  }
+}

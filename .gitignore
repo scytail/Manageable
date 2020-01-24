@@ -1,0 +1,11 @@
+# PyCharm data
+/.idea/
+
+# Python compiled files
+/**/__pycache__/
+
+# Virtual Environments
+/venv/
+
+# Personal files & notes
+/Archive/

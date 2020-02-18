@@ -2,7 +2,7 @@ import datetime
 import json
 from discord.ext import commands
 from discord import Embed
-from Cogs.ConfiguredCog import ConfiguredCog, convert_color
+from Cogs.ConfiguredCog import ConfiguredCog
 from math import ceil
 
 left = '⏪'
@@ -11,15 +11,41 @@ right = '⏩'
 
 class SendMessageCog(ConfiguredCog):
     @commands.command()
-    async def codex(self, ctx: commands.context):
-        color = ConfiguredCog.config['content']['codex_links']['color']
-        wa_link = ConfiguredCog.config['content']['codex_links']['world_anvil']
-        doc_link = ConfiguredCog.config['content']['codex_links']['google_doc']
+    async def tag(self, ctx: commands.context, tag_name: str = None):
+        if tag_name is not None:
+            try:
+                tag_data = ConfiguredCog.config['content']['tags'][tag_name]
+            except KeyError:
+                # No tag found, fail silently
+                return
 
-        message = Embed(title='World Anvil Link', color=color, url=wa_link)
-        await ctx.send(embed=message)
+            # Build tag data
+            color = ConfiguredCog.convert_color(self._get_tag_data_safe(tag_data, 'color'))
+            if color is None:
+                color = Embed.Empty
 
-        message = Embed(title='Google Docs Link', color=color, url=doc_link)
+            title = self._get_tag_data_safe(tag_data, 'title')
+            if title is None:
+                # Tag title isn't set, but is required, set it to the tag name
+                title = tag_name
+
+            url = self._get_tag_data_safe(tag_data, 'url')
+            description = self._get_tag_data_safe(tag_data, 'description')
+
+            # Send embed
+            message = Embed(color=color, title=title, url=url, description=description)
+        else:
+            # Send list of tags
+            message = Embed(title='Available Tags',
+                            description='Please do `tag <tag_name>` to display the tag contents.')
+            for tag_name in ConfiguredCog.config['content']['tags'].keys():
+                title = self._get_tag_data_safe(ConfiguredCog.config['content']['tags'][tag_name], 'title')
+                if title is None:
+                    # Tag title isn't set, but is required, set it to the tag name
+                    title = tag_name
+
+                message.add_field(name=tag_name, value=title)
+
         await ctx.send(embed=message)
 
     @commands.command()
@@ -65,7 +91,7 @@ class SendMessageCog(ConfiguredCog):
     def _parse_help_text() -> dict:
         with open('Data/helptext.json') as help_text_file:
             help_text_dict = json.load(help_text_file)
-            help_text_dict['color'] = convert_color(help_text_dict['color'])
+            help_text_dict['color'] = ConfiguredCog.convert_color(help_text_dict['color'])
 
         return help_text_dict
 
@@ -141,3 +167,10 @@ class SendMessageCog(ConfiguredCog):
             return False
 
         return check
+
+    @staticmethod
+    def _get_tag_data_safe(tag_data: dict, tag_name):
+        try:
+            return tag_data[tag_name]
+        except KeyError:
+            return None

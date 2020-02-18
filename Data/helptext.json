@@ -4,12 +4,12 @@
   "color": "#9e9e55",
   "command_list": {
     "help": {
-      "command": "help",
+      "command": "help <*optional:* command>",
       "description": "DMs this message to the requester. Please do `help <command>` to get more details."
     },
-    "codex": {
-      "command": "codex",
-      "description": "Posts a few links in chat to help users find information about the UTOverse."
+    "tag": {
+      "command": "tag <*optional:* name>",
+      "description": "Posts an embed in chat with the given details provided in the config file."
     },
     "warn": {
       "command": "warn <action> <target_user>",

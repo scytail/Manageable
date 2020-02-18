@@ -5,10 +5,13 @@
   "help_commands_per_page": 3,
 
   "content": {
-    "codex_links": {
-      "color": "#8934eb",
-      "world_anvil": "https://www.worldanvil.com/w/EXAMPLE",
-      "google_doc": "https://docs.google.com/document/d/EXAMPLE"
+    "tags": {
+      "about": {
+        "color": "#8934eb",
+        "title": "Manageable Discord Bot",
+        "url": "https://github.com/scytail/Manageable",
+        "description": "A friendly, easy-to-use discord management bot. Please use the `help` command to see available commands."
+      }
     }
   }
 }

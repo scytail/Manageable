@@ -6,9 +6,6 @@ from datetime import datetime
 
 
 class Action(Enum):
-    INCREASE = 'increase'
-    DECREASE = 'decrease'
-
     APPLY = 'apply'  # create a warning for a user
     RESOLVE = 'resolve'  # remove oldest warning
     UNDO = 'undo'  # remove newest warning

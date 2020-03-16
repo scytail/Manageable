@@ -2,7 +2,7 @@ import datetime
 import json
 from discord.ext import commands
 from discord import Embed
-from Cogs.ConfiguredCog import ConfiguredCog
+from Code.Cogs.ConfiguredCog import ConfiguredCog
 from math import ceil
 
 left = '⏪'

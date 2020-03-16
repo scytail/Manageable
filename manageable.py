@@ -1,9 +1,8 @@
 from discord.ext.commands.bot import Bot
-from Cogs.ConfiguredCog import ConfiguredCog
-from Cogs.SystemInteractionCogs import UserInteractionCog
-from Cogs.MessagingCog import SendMessageCog
-from Cogs.ModToolsCog import DisciplineCog
-
+from Code.Cogs.ConfiguredCog import ConfiguredCog
+from Code.Cogs.ModToolsCog import UserWarnCog
+from Code.Cogs.MessagingCog import SendMessageCog
+from Code.Cogs.SystemInteractionCogs import UserInteractionCog
 
 if __name__ == '__main__':
     # Build the bot
@@ -15,7 +14,7 @@ if __name__ == '__main__':
     print('Attaching functionality...')
     discord_bot.add_cog(UserInteractionCog(discord_bot))
     discord_bot.add_cog(SendMessageCog(discord_bot))
-    discord_bot.add_cog(DisciplineCog(discord_bot))
+    discord_bot.add_cog(UserWarnCog(discord_bot))
 
     # Run the bot
     print('Launching Manageable with the specified bot token.')

@@ -1,8 +1,8 @@
 import json
 from enum import Enum
-from discord.ext import commands
-from Cogs.ConfiguredCog import ConfiguredCog
 from datetime import datetime
+from discord.ext import commands
+from Code.Cogs.ConfiguredCog import ConfiguredCog
 
 
 class Action(Enum):
@@ -12,14 +12,14 @@ class Action(Enum):
     VIEW = 'view'  # display warning count
 
 
-class DisciplineCog(ConfiguredCog):
+class UserWarnCog(ConfiguredCog):
     @commands.command()
     @commands.has_any_role(*ConfiguredCog.config['mod_roles'])
     async def warn(self, ctx: commands.context, action: str, *user_name_list: str):
         user_name_query = ' '.join(user_name_list)
         action = action.lower()
 
-        member_matches = self._lookup_member(user_name_query)
+        member_matches = self._find_discord_member(user_name_query)
 
         if not member_matches:
             await ctx.send(f'No user by the name or id of `{user_name_query}` could be found. '
@@ -68,8 +68,7 @@ class DisciplineCog(ConfiguredCog):
         user_warnings[json_member_id].append({'timestamp': datetime.now()})
 
         # dump everything to the file
-        with open('Data/userwarn.json', 'w') as user_warnings_file:
-            json.dump(user_warnings, user_warnings_file)
+        self._save_warning_data(user_warnings)
 
         return warning_count
 
@@ -101,8 +100,7 @@ class DisciplineCog(ConfiguredCog):
             user_warnings[json_member_id].pop(newest_warning[0])
 
         # dump everything to the file
-        with open('Data/userwarn.json', 'w') as user_warnings_file:
-            json.dump(user_warnings, user_warnings_file)
+        self._save_warning_data(user_warnings)
 
         return warning_count
 
@@ -120,7 +118,7 @@ class DisciplineCog(ConfiguredCog):
         # remove outdated warnings based on a config option
         raise NotImplementedError
 
-    def _lookup_member(self, user: str) -> list:
+    def _find_discord_member(self, user: str) -> list:
         member_matches = []
 
         # try to lookup by ID first, as it'll be faster
@@ -155,6 +153,11 @@ class DisciplineCog(ConfiguredCog):
         multiple_found_message += f'\nPlease try again, using the unique id for the user you wish to warn.'
 
         return multiple_found_message
+
+    @staticmethod
+    def _save_warning_data(warning_data: dict):
+        with open('Data/userwarn.json', 'w') as user_warnings_file:
+            json.dump(warning_data, user_warnings_file)
 
     @staticmethod
     def _load_warning_data() -> dict:

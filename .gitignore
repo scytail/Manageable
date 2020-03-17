@@ -13,3 +13,4 @@
 
 # Application storage
 /Data/*.db
+/Data/*.db-journal

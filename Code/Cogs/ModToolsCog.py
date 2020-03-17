@@ -1,8 +1,10 @@
 import json
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
+from discord import Member
 from discord.ext import commands
 from Code.Cogs.ConfiguredCog import ConfiguredCog
+from Code.Data import DataAccess
 
 
 class Action(Enum):
@@ -16,9 +18,11 @@ class UserWarnCog(ConfiguredCog):
     @commands.command()
     @commands.has_any_role(*ConfiguredCog.config['mod_roles'])
     async def warn(self, ctx: commands.context, action: str, *user_name_list: str):
+        # join all the arguments after the action together, in case we are looking for a display name that has a space
         user_name_query = ' '.join(user_name_list)
         action = action.lower()
 
+        # Finds all the members that match the query (either a discord ID or a display name)
         member_matches = self._find_discord_member(user_name_query)
 
         if not member_matches:
@@ -29,94 +33,79 @@ class UserWarnCog(ConfiguredCog):
             await ctx.send(self._multi_member_found_message(user_name_query, member_matches))
 
         else:
-            self._remove_outdated_warnings()
+            target_member = member_matches[0]
+
+            # remove outdated warnings for the found user
+            self._remove_outdated_warnings(target_member)
 
             if action == Action.APPLY.value:
-                warning_count = self._warn_member(member_matches)
+                warning_count = self._warn_member(target_member)
                 message = f'The user "{user_name_query}" has now been warned, for a total of {warning_count} times.'
             elif action == Action.RESOLVE.value or \
                     action == Action.UNDO.value:
-                warning_count = self._remove_warning(member_matches, action)
-                message = f'The user "{user_name_query}" has now been unwarned, for a total of {warning_count} times.'
+                warning_count = self._remove_warning(target_member, action)
+                message = f'The user "{user_name_query}" has now been unwarned, they now have {warning_count} warnings.'
             elif action == Action.VIEW.value:
-                warning_count = self._view_user_warnings(member_matches)
+                warning_count = self._view_user_warnings(target_member)
                 message = f'The user "{user_name_query}" has {warning_count} warnings.'
             else:
                 message = f'Unknown warning command `{action}`, please re-enter your command and try again.'
 
             await ctx.send(message)
 
-    def _warn_member(self, member_matches: list) -> int:
-        user_warnings = self._load_warning_data()
+    def _remove_outdated_warnings(self, target_member: Member):
+        warning_duration = self.config['warning_duration_days']
 
-        json_member_id = str(member_matches[0].id)
-        if json_member_id in user_warnings:
-            warning_count = len(user_warnings[json_member_id])
-        else:
-            # Create an entry if one doesn't exist so we can add the warning
-            warning_count = 1
-            user_warnings[json_member_id] = []
+        if warning_duration <= 0:
+            # If duration set in the config is zero or less, we assume warnings are permanent.
+            return
 
-        '''
-        userwarnings.json
-        {
-        'json_member_id' : [
-        {'timestamp': <datetime>}
-        ]
-        }
-        '''
-        user_warnings[json_member_id].append({'timestamp': datetime.now()})
+        user_warnings = DataAccess.lookup_warnings_by_discord_id(target_member.id)
 
-        # dump everything to the file
-        self._save_warning_data(user_warnings)
+        for warning in user_warnings:
+            if datetime.now() - timedelta(days=warning_duration) > warning.Warning_Stamp:
+                DataAccess.delete_warning(warning.WarningTable.Warning_Id)
+
+    @staticmethod
+    def _warn_member(target_member: Member) -> int:
+        warning_count = DataAccess.lookup_warnings_by_discord_id(target_member.id).count()
+
+        # Find the user in the db so we can attach a warning to it (should add a user if none found?)
+        db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+
+        # Add the new warning
+        DataAccess.add_warning(db_user_id)
+        warning_count += 1
 
         return warning_count
 
-    def _remove_warning(self, member_matches: list, action: str) -> int:
-        user_warnings = self._load_warning_data()
+    @staticmethod
+    def _remove_warning(target_member: Member, action: str) -> int:
+        user_warnings = DataAccess.lookup_warnings_by_discord_id(target_member.id)
 
-        json_member_id = str(member_matches[0].id)
-        if json_member_id in user_warnings:
-            warning_count = len(user_warnings[json_member_id]) - 1
-        else:
-            # No member found, therefore no warnings
-            return 0
+        warning_count = user_warnings.count()
 
-        oldest_warning = (-1, datetime.now())
-        newest_warning = (-1, datetime.min)
-        for warning_index in range(len(user_warnings[json_member_id])):
-            warning_datetime = user_warnings[json_member_id]['timestamp']
-
-            if warning_datetime < oldest_warning[1]:
-                oldest_warning = (warning_index, warning_datetime)
-            if warning_datetime > newest_warning[1]:
-                newest_warning = (warning_index, warning_datetime)
+        if warning_count == 0:
+            # no warnings, so nothing to remove.
+            return warning_count
 
         if action == Action.RESOLVE.value:
             # Remove the oldest index
-            user_warnings[json_member_id].pop(oldest_warning[0])
+            delete_newest = False
         elif action == Action.UNDO.value:
             # Remove the newest index
-            user_warnings[json_member_id].pop(newest_warning[0])
+            delete_newest = True
+        else:
+            raise ValueError('The action argument must be a valid removal Action.')
 
-        # dump everything to the file
-        self._save_warning_data(user_warnings)
+        DataAccess.delete_warning(target_member.id, delete_newest)
+        warning_count -= 1
 
         return warning_count
 
-    def _view_user_warnings(self, member_matches: list) -> int:
-        user_warnings = self._load_warning_data()
-
-        json_member_id = str(member_matches[0].id)
-        if json_member_id in user_warnings:
-            return len(user_warnings[json_member_id])
-        else:
-            # No member found, therefore no warnings
-            return 0
-
-    def _remove_outdated_warnings(self):
-        # remove outdated warnings based on a config option
-        raise NotImplementedError
+    @staticmethod
+    def _view_user_warnings(target_member: Member) -> int:
+        return DataAccess.lookup_warnings_by_discord_id(target_member.id).count()
 
     def _find_discord_member(self, user: str) -> list:
         member_matches = []
@@ -153,15 +142,3 @@ class UserWarnCog(ConfiguredCog):
         multiple_found_message += f'\nPlease try again, using the unique id for the user you wish to warn.'
 
         return multiple_found_message
-
-    @staticmethod
-    def _save_warning_data(warning_data: dict):
-        with open('Data/userwarn.json', 'w') as user_warnings_file:
-            json.dump(warning_data, user_warnings_file)
-
-    @staticmethod
-    def _load_warning_data() -> dict:
-        with open('Data/userwarn.json', 'r') as user_warnings_file:
-            user_warnings = json.load(user_warnings_file)
-
-        return user_warnings

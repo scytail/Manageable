@@ -7,11 +7,11 @@ Created by Ben Schwabe, originally for a worldbuilding Discord server. Feature b
 # Command List
 Currently, Manageable has these commands:
 
-| Command                     | Description                                                                                                                                                                                                            |
-| :-------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `help <optional: command>`  | DMs a paginated display enumerating all the available bot commands, or a single command's details if specified.                                                                                                        |
-| `tag <optional: name>`      | Posts an embed in chat with the given details provided in the config file.                                                                                                                                             |
-| `warn <action> <user>`      | _mod only:_ Performs the specified action to the defined user. Actions can be `increase` to increase the warning level, `decrease` to decrease the warning level, and `view` to display the warning level of the user. |
+| Command                                      | Description                                                                                                                                                                                                                                                                                  |
+| :------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `help <optional: command>`                   | DMs a paginated display enumerating all the available bot commands, or a single command's details if specified.                                                                                                                                                                              |
+| `tag <optional: name>`                       | Posts an embed in chat with the given details provided in the config file.                                                                                                                                                                                                                   |
+| `warn <apply;resolve;undo;view> <user>`      | _mod only:_ Performs the specified action to the defined user. Actions can be `apply` to give a user another warning, `resolve` remove the oldest warning for that user, `undo` to remove the newest warning for that user, and `view` to display the amount of warnings given to that user. |
 
 ## Setup
 

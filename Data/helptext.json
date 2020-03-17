@@ -16,16 +16,20 @@
       "description": "Performs the specified action to the targeted user. **Mod roles only**.",
       "details": [
         {
-          "parameter": "action: increase",
-          "description": "Increment the user's warning level by one."
+          "parameter": "action: apply",
+          "description": "Add a new warning to the specified user."
         },
         {
-          "parameter": "action: decrease",
-          "description": "Decrement the user's warning level by one."
+          "parameter": "action: resolve",
+          "description": "Remove the oldest warning attached to the user."
+        },
+        {
+          "parameter": "action: undo",
+          "description": "Remove the newest warning attached to the user."
         },
         {
           "parameter": "action: view",
-          "description": "View the user's current warning level."
+          "description": "View the number of warnings attached to the user."
         }
       ]
     }

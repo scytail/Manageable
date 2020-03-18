@@ -7,11 +7,11 @@ Created by Ben Schwabe, originally for a worldbuilding Discord server. Feature b
 # Command List
 Currently, Manageable has these commands:
 
-| Command                     | Description                                                                                                                                                                                                            |
-| :-------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `help <optional: command>`  | DMs a paginated display enumerating all the available bot commands, or a single command's details if specified.                                                                                                        |
-| `tag <optional: name>`      | Posts an embed in chat with the given details provided in the config file.                                                                                                                                             |
-| `warn <action> <user>`      | _mod only:_ Performs the specified action to the defined user. Actions can be `increase` to increase the warning level, `decrease` to decrease the warning level, and `view` to display the warning level of the user. |
+| Command                                      | Description                                                                                                                                                                                                                                                                                  |
+| :------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `help <optional: command>`                   | DMs a paginated display enumerating all the available bot commands, or a single command's details if specified.                                                                                                                                                                              |
+| `tag <optional: name>`                       | Posts an embed in chat with the given details provided in the config file.                                                                                                                                                                                                                   |
+| `warn <apply;resolve;undo;view> <user>`      | _mod only:_ Performs the specified action to the defined user. Actions can be `apply` to give a user another warning, `resolve` remove the oldest warning for that user, `undo` to remove the newest warning for that user, and `view` to display the amount of warnings given to that user. |
 
 ## Setup
 
@@ -48,6 +48,9 @@ This is the main json configuration file for Manageable, and contains all the ba
 * `/command_prefix`: A string prefix to address the bot so that it knows a command is being run.
 * `/mod_roles`: A string list of all the role names (case sensitive) that you'd like to be able to execute Manageable's moderator-only commands.
 * `/help_commands_per_page`: An integer denoting how many commands you'd like the help command to display per page.
-* `/content/codex_links/color`: A hexadecimal color value, with a hash tag (`#`) in front of it, denoting what color to make the codex link embeds
-* `/content/codex_links/world_anvil`: A string URL pointing to the [World Anvil](https://www.worldanvil.com/) codex link.
-* `/content/codex_links/google_doc`: A string URL pointing to the [Google Docs](https://docs.google.com) codex link.
+* `/warning_duration_days`: An integer denoting how many days you'd like warnings to persist before removal. Setting this value to zero means warnings will never decay.
+* `/content/tags`: a dictionary of tags, where the tag name is the key, and the value is a dictionary, configured by the following values:
+    * `color`: _(optional)_ A hexadecimal value in the format `#000000`, denoting the color of the tag's embed.
+    * `title`: _(required)_ A string value denoting the title of the embed.
+    * `url`: _(optional)_ A valid URL to which the embed will create a clickable link.
+    * `description`: _(optional)_ A string denoting the description text of the discord embed

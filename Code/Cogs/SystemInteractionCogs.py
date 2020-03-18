@@ -1,7 +1,7 @@
 import sys
 import traceback
 from discord.ext import commands
-from Cogs.ConfiguredCog import ConfiguredCog
+from Code.Cogs.ConfiguredCog import ConfiguredCog
 
 
 class UserInteractionCog(ConfiguredCog):

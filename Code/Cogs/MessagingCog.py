@@ -2,7 +2,7 @@ import datetime
 import json
 from discord.ext import commands
 from discord import Embed
-from Cogs.ConfiguredCog import ConfiguredCog
+from Code.Cogs.ConfiguredCog import ConfiguredCog
 from math import ceil
 
 left = '⏪'
@@ -133,7 +133,7 @@ class SendMessageCog(ConfiguredCog):
     @classmethod
     def _build_help_detail(cls, help_dict: dict, command_id: str) -> list:
         embed_list: list = []
-        if not command_id in help_dict['command_list']:
+        if command_id not in help_dict['command_list']:
             # Command not found, return an error embed to the user
             embed = Embed(title=command_id, description='Command not found', color=help_dict['color'])
             embed_list.append(embed)

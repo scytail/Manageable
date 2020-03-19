@@ -41,6 +41,8 @@ class Decorator(object):
         the function to decorate.
 
         """
+        self.options = {}
+
         self.setup(*args, **kwargs)
         self.decorated = UNDEFINED_FUNCTION
         if func is not UNDEFINED_FUNCTION:

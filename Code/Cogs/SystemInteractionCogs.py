@@ -1,17 +1,29 @@
 import sys
 import traceback
 from discord.ext import commands
-from Code.Cogs.ConfiguredCog import ConfiguredCog
+from Code.Cogs.Base import ConfiguredCog
 
 
 class UserInteractionCog(ConfiguredCog):
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        print(f'{member.display_name} joined.')
+    """A Cog class meant to passively watch for events on the server.
+
+    Methods
+    -------
+    on_command_error    Watches for uncaught errors and handles them appropriately.
+    """
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, exception: commands.errors):
-        # Inspired by https://gist.github.com/EvieePy/7822af90858ef65012ea500bcecf1612
+        """Watches for uncaught errors and outputs the error to the console, as normal, while also emitting a more
+           user-friendly message to the discord server.
+
+        Inspired by https://gist.github.com/EvieePy/7822af90858ef65012ea500bcecf1612
+
+        Parameters
+        ----------
+        ctx:        discord.ext.commands.Context    The context of the server messages.
+        exception:  discord.ext.commands.errors     The exception that was passed up the chain.
+        """
 
         # Verify that a local handler hasn't already interfaced with the error
         if hasattr(ctx.command, 'on_error'):

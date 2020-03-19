@@ -1,17 +1,29 @@
 import datetime
 import json
 from discord.ext import commands
-from discord import Embed
-from Code.Cogs.ConfiguredCog import ConfiguredCog
+from discord import Embed, Message
+from Code.Cogs.Base import ConfiguredCog
 from math import ceil
 
-left = '⏪'
-right = '⏩'
 
+class TagCog(ConfiguredCog):
+    """A class supporting the `tag` command functionality.
 
-class SendMessageCog(ConfiguredCog):
+    Methods
+    -------
+    tag     The origin point for the `tag` command.
+    """
+
     @commands.command()
     async def tag(self, ctx: commands.context, tag_name: str = None):
+        """The origin point for the `tag` command.
+
+        Parameters
+        ----------
+        ctx:        discord.ext.commands.context    The command context.
+        tag_name:   str                             The key string of the tag to query the config for.
+        """
+
         if tag_name is not None:
             try:
                 tag_data = ConfiguredCog.config['content']['tags'][tag_name]
@@ -48,8 +60,50 @@ class SendMessageCog(ConfiguredCog):
 
         await ctx.send(embed=message)
 
+    @staticmethod
+    def _get_tag_data_safe(tag_data: dict, tag_name: str):
+        """A static method to look up the tag name from a dictionary of tag data and fail safely if it can't be found.
+
+        Parameters
+        ----------
+        tag_data:   dict    A dictionary of tags an their data, where the keys are strings referencing the tag's
+                            name, and the values are dictionaries denoting the data to build the tag.
+        tag_name:   str     The key to query in the provided data.
+
+        Returns
+        -------
+        dict    If the tag name is found in the data's keys, return the corresponding dictionary value.
+        None    If the tag's name was not found in the data's keys, return `None`.
+        """
+
+        try:
+            return tag_data[tag_name]
+        except KeyError:
+            return None
+
+
+class HelpCog(ConfiguredCog):
+    """A class supporting the `help` functionality.
+
+    Methods
+    -------
+    help    The origin point for the `help` command.
+    """
+
+    _left = '⏪'  # emote to use as the left reaction for pagination
+    _right = '⏩'  # emote to use as the right reaction for pagination
+    _mail = '📧'  # emote to use as the mail reaction for the requester's message
+
     @commands.command()
     async def help(self, ctx: commands.context, command: str = None):
+        """The origin point for the `help` command. Supports help text pagination based on the config settings
+
+        Parameters
+        ----------
+        ctx:        discord.ext.commands.context    The command context.
+        command:    str|None                        The command to query details for
+        """
+
         index: int = 0
         message = None
         action: callable = ctx.author.send
@@ -62,7 +116,7 @@ class SendMessageCog(ConfiguredCog):
         else:
             pages = self._build_help_detail(help_dict, command)
 
-        await ctx.message.add_reaction('📧')
+        await ctx.message.add_reaction(self._mail)
 
         # Only allow pagination manipulation for 10 minutes
         while datetime.datetime.now()-request_start_time < datetime.timedelta(minutes=10):
@@ -72,8 +126,8 @@ class SendMessageCog(ConfiguredCog):
                 message = sent_message
 
             # Add controls
-            await message.add_reaction(left)
-            await message.add_reaction(right)
+            await message.add_reaction(self._left)
+            await message.add_reaction(self._right)
 
             allow_decrease = index != 0
             allow_increase = index != len(pages) - 1
@@ -81,22 +135,41 @@ class SendMessageCog(ConfiguredCog):
             # Check for reactions
             react, user = await self.bot.wait_for('reaction_add',
                                                   check=self._get_check_method(message, allow_decrease, allow_increase))
-            if react.emoji == left:
+            if react.emoji == self._left:
                 index -= 1
-            elif react.emoji == right:
+            elif react.emoji == self._right:
                 index += 1
             action = message.edit
 
     @staticmethod
     def _parse_help_text() -> dict:
+        """Parses the help text out into its corresponding data, converting color strings to their numeric integers.
+
+        Returns
+        -------
+        dict    The parsed json data from the necessary data file,
+                with some processing done to a few color fields.
+        """
+
         with open('Data/helptext.json') as help_text_file:
             help_text_dict = json.load(help_text_file)
             help_text_dict['color'] = ConfiguredCog.convert_color(help_text_dict['color'])
 
         return help_text_dict
 
-    @classmethod
-    def _build_help_summary(cls, help_dict: dict) -> list:
+    @staticmethod
+    def _build_help_summary(help_dict: dict) -> list:
+        """Takes the help data and builds a list of embeds to output to the user as needed
+
+        Parameters
+        ----------
+        help_dict:  dict    The help text dictionary parsed from json.
+
+        Returns
+        -------
+        list    A list of `discord.Embed` objects that will be used as pages when browsing the help command
+        """
+
         commands_per_embed: int = ConfiguredCog.config['help_commands_per_page']
         command_index: int = 0
         embed = None
@@ -130,8 +203,21 @@ class SendMessageCog(ConfiguredCog):
 
         return embed_list
 
-    @classmethod
-    def _build_help_detail(cls, help_dict: dict, command_id: str) -> list:
+    @staticmethod
+    def _build_help_detail(help_dict: dict, command_id: str) -> list:
+        """Builds the embed data for the command detail.
+
+        Parameters
+        ----------
+        help_dict:  dict    The data dictionary that has the help information.
+        command_id: str     The command keyword to search the help dictionary for.
+
+        Returns
+        -------
+        list    A list of `discord.Embed` objects,
+                where each embed is a page to display that contains help information.
+        """
+
         embed_list: list = []
         if command_id not in help_dict['command_list']:
             # Command not found, return an error embed to the user
@@ -153,24 +239,30 @@ class SendMessageCog(ConfiguredCog):
 
         return embed_list
 
-    def _get_check_method(self, message, allow_decrease, allow_increase) -> callable([..., bool]):
-        # This method returns a method that can be plugged into a bot's check functionality.
-        # The method's allow_decrease and allow_increase variables will be "baked" into the method before its passed
-        # to the bot, which will be able to alter the flow of functionality when watching for reacts.
+    def _get_check_method(self, message: Message, allow_decrease: bool, allow_increase: bool) -> callable([..., bool]):
+        """Builds and returns a method that can be plugged into a bot's check functionality.
+           The method's allow_decrease and allow_increase variables will be "baked" into the method before its passed to
+           the bot, which will be able to alter the flow of functionality when watching for reacts.
+
+        Parameters
+        ----------
+        message:        discord.Message     The message instance that we are watching reacts from.
+        allow_decrease: bool                Whether to allow going one page back or not.
+        allow_increase: bool                Whether to allow going one page forward or not.
+
+        Returns
+        -------
+        callable([..., bool])   A method that takes some number of arguments and returns a boolean on whether you can
+                                move to the page desired.
+        """
+
         def check(reaction, user) -> bool:
             if reaction.message.id != message.id or user == self.bot.user:
                 return False
-            if allow_decrease and reaction.emoji == left:
+            if allow_decrease and reaction.emoji == self._left:
                 return True
-            if allow_increase and reaction.emoji == right:
+            if allow_increase and reaction.emoji == self._right:
                 return True
             return False
 
         return check
-
-    @staticmethod
-    def _get_tag_data_safe(tag_data: dict, tag_name):
-        try:
-            return tag_data[tag_name]
-        except KeyError:
-            return None

@@ -1,7 +1,7 @@
 from discord.ext.commands.bot import Bot
-from Code.Cogs.ConfiguredCog import ConfiguredCog
-from Code.Cogs.ModToolsCog import UserWarnCog
-from Code.Cogs.MessagingCog import SendMessageCog
+from Code.Cogs.Base import ConfiguredCog
+from Code.Cogs.ModToolsCogs import UserWarnCog
+from Code.Cogs.MessagingCogs import HelpCog, TagCog
 from Code.Cogs.SystemInteractionCogs import UserInteractionCog
 
 if __name__ == '__main__':
@@ -13,7 +13,8 @@ if __name__ == '__main__':
     # Add the necessary cogs
     print('Attaching functionality...')
     discord_bot.add_cog(UserInteractionCog(discord_bot))
-    discord_bot.add_cog(SendMessageCog(discord_bot))
+    discord_bot.add_cog(HelpCog(discord_bot))
+    discord_bot.add_cog(TagCog(discord_bot))
     discord_bot.add_cog(UserWarnCog(discord_bot))
 
     # Run the bot

@@ -44,7 +44,7 @@ class ConfiguredCog(commands.Cog):
     convert_color   A static class method for use processing stringified hex codes into integers.
     """
 
-    config: dict = _load_config('Config/test_config.json')
+    config: dict = _load_config('Config/config.json')
 
     def __init__(self, bot: commands.Bot):
         """Initializes the Base class for usage

@@ -32,6 +32,9 @@ class UserInteractionCog(ConfiguredCog):
         if isinstance(exception, (commands.MissingRole, commands.MissingAnyRole)):
             return await ctx.send(str(exception))
 
+        if isinstance(exception, commands.CommandNotFound):
+            return await ctx.send(str(exception))
+
         # Output the default exception to the console since it wasn't handled elsewhere
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)

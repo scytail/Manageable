@@ -1,8 +1,50 @@
-from discord.ext import commands
 import json
+import logging
+from discord.ext import commands
 
 
-def _load_config(filename: str) -> dict:
+def build_logger(enable_debug: bool) -> logging.Logger:
+    """Builds a logger instance that is used for various system logging.
+
+    Parameters
+    ----------
+    enable_debug:   bool    A boolean toggle of whether to enable debug messages to get logged or not.
+
+    Returns
+    -------
+    logging.Logger  The configured logger instance that can be logged to.
+    """
+
+    # Set lowest logging level
+    if enable_debug:
+        logger_base_level = logging.DEBUG
+    else:
+        logger_base_level = logging.INFO
+
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s')
+
+    # Create logger management class
+    logger = logging.getLogger('main logger')
+    logger.setLevel(logger_base_level)
+
+    # Create file logger
+    file_logger = logging.FileHandler('Data/debug.log')
+    file_logger.setLevel(logger_base_level)
+    file_logger.setFormatter(formatter)
+
+    # Create console logger
+    console_logger = logging.StreamHandler()
+    console_logger.setLevel(logging.WARNING)  # console output should only be important information
+    console_logger.setFormatter(formatter)
+
+    # Add the handlers to the logger
+    logger.addHandler(file_logger)
+    logger.addHandler(console_logger)
+
+    return logger
+
+
+def load_config(filename: str) -> dict:
     """Loads the specified json config file into memory for usage.
 
     Parameters
@@ -24,7 +66,7 @@ def _load_config(filename: str) -> dict:
     with open(filename) as config_file:
         json_dict = json.load(config_file)
 
-    return json_dict
+    return dict(json_dict)
 
 
 class ConfiguredCog(commands.Cog):
@@ -44,7 +86,8 @@ class ConfiguredCog(commands.Cog):
     convert_color   A static class method for use processing stringified hex codes into integers.
     """
 
-    config: dict = _load_config('Config/config.json')
+    config: dict = load_config('Config/config.json')
+    logger: logging.Logger = build_logger(config['verbose_logging'])
 
     def __init__(self, bot: commands.Bot):
         """Initializes the Base class for usage

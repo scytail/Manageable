@@ -27,15 +27,18 @@ class UserInteractionCog(ConfiguredCog):
 
         # Verify that a local handler hasn't already interfaced with the error
         if hasattr(ctx.command, 'on_error'):
+            command = ctx.command
+            self.logger.debug(f'Ignoring exception in command {command}, as another module has already handled it.')
             return
 
-        if isinstance(exception, (commands.MissingRole, commands.MissingAnyRole)):
-            return await ctx.send(str(exception))
-
-        if isinstance(exception, commands.CommandNotFound):
+        if isinstance(exception, (commands.MissingRole, commands.MissingAnyRole)) or \
+           isinstance(exception, commands.CommandNotFound):
+            exception_type = type(exception)
+            self.logger.warning(f'Passing exception of type {exception_type} to public users.')
             return await ctx.send(str(exception))
 
         # Output the default exception to the console since it wasn't handled elsewhere
-        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        command = ctx.command
+        self.logger.error(f'Skipping exception in command {command}.')
         traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
         return await ctx.send('An internal error occurred while processing your command.')

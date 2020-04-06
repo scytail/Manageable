@@ -4,6 +4,7 @@
   "mod_roles": ["Admin_role_here","Another_admin_role_here","etc"],
   "help_commands_per_page": 3,
   "warning_duration_days": 0,
+  "verbose_logging": false,
 
   "content": {
     "tags": {

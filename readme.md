@@ -49,6 +49,7 @@ This is the main json configuration file for Manageable, and contains all the ba
 * `/mod_roles`: A string list of all the role names (case sensitive) that you'd like to be able to execute Manageable's moderator-only commands.
 * `/help_commands_per_page`: An integer denoting how many commands you'd like the help command to display per page.
 * `/warning_duration_days`: An integer denoting how many days you'd like warnings to persist before removal. Setting this value to zero means warnings will never decay.
+* `/verbose_logging`: A boolean value indicating whether to allow more verbose logging in the debug.log file. This does not impact console logging.
 * `/content/tags`: a dictionary of tags, where the tag name is the key, and the value is a dictionary, configured by the following values:
     * `color`: _(optional)_ A hexadecimal value in the format `#000000`, denoting the color of the tag's embed.
     * `title`: _(required)_ A string value denoting the title of the embed.

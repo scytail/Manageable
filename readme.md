@@ -34,6 +34,7 @@ Manageable will need these permissions to run. Omitting any of these permissions
 | Send Messages | The bot needs to be able to send server message and DMs to respond to commands. |
 | Embed Links   | The bot needs to be able to embed links to display some commands correctly.     |
 | Add Reactions | The bot uses reactions to control pagination of its help command.               |
+| Manage Roles  | The bot needs to be able to manage roles to add and remove roles from users.    |
 
 ##### 4) Configure the Bot Functionality
 Open `config.json`, located in the `Config` folder. Paste in the bot's token you received from discord in the `token` line, and configure any other information desired. Documentation for the configuration file is found in a later section.
@@ -50,8 +51,9 @@ This is the main json configuration file for Manageable, and contains all the ba
 * `/help_commands_per_page`: An integer denoting how many commands you'd like the help command to display per page.
 * `/warning_duration_days`: An integer denoting how many days you'd like warnings to persist before removal. Setting this value to zero means warnings will never decay.
 * `/verbose_logging`: A boolean value indicating whether to allow more verbose logging in the debug.log file. This does not impact console logging.
-* `/content/tags`: a dictionary of tags, where the tag name is the key, and the value is a dictionary, configured by the following values:
+* `/content/tags`: A dictionary of tags, where the tag name is the key, and the value is a dictionary, configured by the following values:
     * `color`: _(optional)_ A hexadecimal value in the format `#000000`, denoting the color of the tag's embed.
     * `title`: _(required)_ A string value denoting the title of the embed.
     * `url`: _(optional)_ A valid URL to which the embed will create a clickable link.
     * `description`: _(optional)_ A string denoting the description text of the discord embed
+* `/content/role_whitelist`: A list of strings representing all the role names (below the bot's role on the server) that the bot can add or remove from users that request them. 

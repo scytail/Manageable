@@ -1,7 +1,17 @@
-import sys
+from enum import Enum
 import traceback
 from discord.ext import commands
+from discord import Role, Guild, Member
+from typing import Optional
 from Code.Cogs.Base import ConfiguredCog
+
+
+class RequestAction(Enum):
+    """An enumeration class containing all the possible role request actions that can be taken."""
+
+    ADD = 'add'  # add a role to the user
+    REMOVE = 'remove'  # remove a role from the user
+    LIST = 'list'  # list all the possible roles
 
 
 class UserInteractionCog(ConfiguredCog):
@@ -39,6 +49,144 @@ class UserInteractionCog(ConfiguredCog):
 
         # Output the default exception to the console since it wasn't handled elsewhere
         command = ctx.command
-        self.logger.error(f'Skipping exception in command {command}.')
-        traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
+        self.logger.error(f'Skipping exception in command {command}: {exception}')
+        self.logger.info(traceback.format_exc())
         return await ctx.send('An internal error occurred while processing your command.')
+
+
+class RoleRequestCog(ConfiguredCog):
+    """A Cog class meant to add and remove roles from users that request them.
+
+    Methods
+    -------
+    role    The origin point for the `role` command.
+    """
+
+    @commands.command()
+    async def role(self, ctx: commands.Context, action: str, *target_role_list: str):
+        """The origin point for the `role` command.
+
+        Parameters
+        ----------
+        ctx:                discord.ext.commands.Context    The command context.
+        action:             str                             The string action to execute. Should correlate to an action
+                                                            in the `RequestAction` enumeration.
+        target_role_list:   List[str]                       A list of strings, denoting the desired role to perform the
+                                                            action (or ignored, depending on the action). This list will
+                                                            be joined by spaces.
+        """
+
+        role_query = ' '.join(target_role_list)
+        action = action.lower()
+
+        if action == RequestAction.ADD.value:
+            # find role
+            role = self._find_role_in_guild(role_query, ctx.guild)
+            if not role:
+                await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
+                               f'Please check your spelling and try again.')
+                return
+
+            # make sure it's allowed to be manipulated
+            if not self._validate_role_against_whitelist(role):
+                await ctx.send("You are not allowed to interact with this role.")
+                return
+
+            # add role to user
+            if self._member_contains_role(role.name, ctx.author):
+                message = f'You already have that role.'
+            else:
+                await ctx.author.add_roles(role, reason='Role added via Manageable bot instance.')
+                message = f'You now have the `{role.name}` role.'
+        elif action == RequestAction.REMOVE.value:
+            # find role
+            role = self._find_role_in_guild(role_query, ctx.guild)
+            if not role:
+                await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
+                               f'Please check your spelling and try again.')
+                return
+
+            # make sure it's allowed to be manipulated
+            if not self._validate_role_against_whitelist(role):
+                await ctx.send("You are not allowed to interact with this role.")
+                return
+
+            # remove role from user
+            if self._member_contains_role(role.name, ctx.author):
+                await ctx.author.remove_roles(role, reason='Role removed via Manageable bot instance.')
+                message = f'You no longer have the `{role.name}` role.'
+            else:
+                message = f'You do not have that role.'
+        elif action == RequestAction.LIST.value:
+            # list all available roles
+            message = "__**Available roles to add/remove:**__"
+            for role_name in self.config["content"]["role_whitelist"]:
+                if self._find_role_in_guild(role_name, ctx.guild):
+                    message += f"\n{role_name}"
+        else:
+            message = f'Unknown role command `{action}`, please re-enter your command and try again.'
+
+        await ctx.send(message)
+
+    @staticmethod
+    def _find_role_in_guild(role_name_query: str, guild: Guild) -> Optional[Role]:
+        """Finds a role with the provided name in a guild.
+
+        Notes
+        -----
+        Please note that this will find the first (lowest) role with the provided name. Be careful if the guild has
+        multiple roles with the same role name. Also keep in mind that the role search IS case sensitive.
+
+        Parameters
+        ----------
+        role_name_query:    str             The name of the role to search the guild for
+        guild:              discord.Guild   The guild to validate the role name against
+
+        Returns
+        -------
+        Optional[Role]  Returns the role in the class, or None if no role exists in the guild
+        """
+        for role in guild.roles:
+            if role.name == role_name_query:
+                # found the role with the provided name
+                return role
+
+        # didn't find the role
+        return None
+
+    def _validate_role_against_whitelist(self, role: Role) -> bool:
+        """Validates that the given role is in the config whitelist for allowed role interactions
+
+        Parameters
+        ----------
+        role:   discord.Role    The role to validate against the whitelist configuration
+
+        Returns
+        -------
+        bool    True if the case-sensitive role name is listed in the config, False otherwise.
+        """
+        # Check the whitelist to make sure we are allowed to add this role
+        if role.name not in self.config["content"]["role_whitelist"]:
+            return False
+        return True
+
+    @staticmethod
+    def _member_contains_role(role_name_query: str, member: Member) -> bool:
+        """Validates that the provided member has a role with the given name.
+
+        Parameters
+        ----------
+        role_name_query:    str             The name of the role to search the guild for
+        member:             discord.Member  The guild to validate the role name against
+
+        Returns
+        -------
+        bool    Returns True if the member contains the role, or False otherwise
+        """
+        for role in member.roles:
+            if role.name == role_name_query:
+                # found the role with the provided name
+                return True
+
+        # didn't find the role
+        return False

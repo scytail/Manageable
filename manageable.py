@@ -2,7 +2,7 @@ from discord.ext.commands.bot import Bot
 import Code.Cogs.Base as Base
 from Code.Cogs.ModToolsCogs import UserWarnCog
 from Code.Cogs.MessagingCogs import HelpCog, TagCog
-from Code.Cogs.SystemInteractionCogs import UserInteractionCog
+from Code.Cogs.SystemInteractionCogs import UserInteractionCog, RoleRequestCog
 
 
 if __name__ == '__main__':
@@ -11,7 +11,7 @@ if __name__ == '__main__':
     Base.ConfiguredCog.logger.debug(f'Building bot.')
     discord_bot = Bot(Base.ConfiguredCog.config['command_prefix'])
 
-    Base.ConfiguredCog.logger.debug('Removing help command.')
+    Base.ConfiguredCog.logger.debug('Removing built-in help command.')
     discord_bot.remove_command('help')  # We are providing our own help command
 
     # Add the necessary cogs
@@ -27,6 +27,9 @@ if __name__ == '__main__':
 
     Base.ConfiguredCog.logger.debug('Adding UserWarn Cog.')
     discord_bot.add_cog(UserWarnCog(discord_bot))
+
+    Base.ConfiguredCog.logger.debug('Adding RoleRequestCog Cog.')
+    discord_bot.add_cog(RoleRequestCog(discord_bot))
 
     # Run the bot
     Base.ConfiguredCog.logger.warning('Launching Manageable with the specified bot token.')

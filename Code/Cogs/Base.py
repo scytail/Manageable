@@ -2,6 +2,9 @@ import json
 import logging
 from discord.ext import commands
 
+# The config file to load data from.
+CONFIG_FILE = 'Config/config.json'
+
 
 def build_logger(enable_debug: bool) -> logging.Logger:
     """Builds a logger instance that is used for various system logging.
@@ -86,7 +89,7 @@ class ConfiguredCog(commands.Cog):
     convert_color   A static class method for use processing stringified hex codes into integers.
     """
 
-    config: dict = load_config('Config/config.json')
+    config: dict = load_config(CONFIG_FILE)
     logger: logging.Logger = build_logger(config['verbose_logging'])
 
     def __init__(self, bot: commands.Bot):

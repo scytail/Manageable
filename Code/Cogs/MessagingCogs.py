@@ -15,12 +15,12 @@ class TagCog(ConfiguredCog):
     """
 
     @commands.command()
-    async def tag(self, ctx: commands.context, tag_name: str = None):
+    async def tag(self, ctx: commands.Context, tag_name: str = None):
         """The origin point for the `tag` command.
 
         Parameters
         ----------
-        ctx:        discord.ext.commands.context    The command context.
+        ctx:        discord.ext.commands.Context    The command context.
         tag_name:   str                             The key string of the tag to query the config for.
         """
 

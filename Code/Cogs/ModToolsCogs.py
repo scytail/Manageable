@@ -6,7 +6,7 @@ from Code.Cogs.Base import ConfiguredCog
 from Code.Data import DataAccess
 
 
-class Action(Enum):
+class WarnAction(Enum):
     """An enumeration class containing all the possible warning actions that can be taken."""
 
     APPLY = 'apply'  # create a warning for a user
@@ -25,15 +25,15 @@ class UserWarnCog(ConfiguredCog):
 
     @commands.command()
     @commands.has_any_role(*ConfiguredCog.config['mod_roles'])
-    async def warn(self, ctx: commands.context, action: str, *user_name_list: str):
+    async def warn(self, ctx: commands.Context, action: str, *user_name_list: str):
         """The origin point for the `warn` command.
 
         Parameters
         ----------
-        ctx:            discord.ext.commands.context    The command context.
+        ctx:            discord.ext.commands.Context    The command context.
         action:         str                             The string action to execute. Should correlate to an action in
-                                                        the `Action` enumeration.
-        user_name_list: str                             A list of strings, denoting either a user's nickname, or their
+                                                        the `WarnAction` enumeration.
+        user_name_list: List[str]                       A list of strings, denoting either a user's nickname, or their
                                                         discord ID. This list will be joined by spaces and compared
                                                         against the server's member list, first by trying to convert it
                                                         to an integer and searching by unique ID, then by querying the
@@ -60,14 +60,14 @@ class UserWarnCog(ConfiguredCog):
             # remove outdated warnings for the found user
             self._remove_outdated_warnings(target_member)
 
-            if action == Action.APPLY.value:
+            if action == WarnAction.APPLY.value:
                 warning_count = self._warn_member(target_member)
                 message = f'The user "{user_name_query}" has now been warned, for a total of {warning_count} times.'
-            elif action == Action.RESOLVE.value or \
-                    action == Action.UNDO.value:
+            elif action == WarnAction.RESOLVE.value or \
+                    action == WarnAction.UNDO.value:
                 warning_count = self._remove_warning(target_member, action)
                 message = f'The user "{user_name_query}" has now been unwarned, they now have {warning_count} warnings.'
-            elif action == Action.VIEW.value:
+            elif action == WarnAction.VIEW.value:
                 warning_count = self._view_user_warnings(target_member)
                 message = f'The user "{user_name_query}" has {warning_count} warnings.'
             else:
@@ -129,7 +129,7 @@ class UserWarnCog(ConfiguredCog):
         Parameters
         ----------
         target_member:  discord.Member  The member to add a warning to.
-        action:         str             The action to perform. MUST be either `Action.RESOLVE` or `Action.UNDO`.
+        action:         str             The action to perform. MUST be either `WarnAction.RESOLVE` or `WarnAction.UNDO`.
 
         Returns
         -------
@@ -148,14 +148,14 @@ class UserWarnCog(ConfiguredCog):
             # no warnings, so nothing to remove.
             return warning_count
 
-        if action == Action.RESOLVE.value:
+        if action == WarnAction.RESOLVE.value:
             # Remove the oldest index
             delete_newest = False
-        elif action == Action.UNDO.value:
+        elif action == WarnAction.UNDO.value:
             # Remove the newest index
             delete_newest = True
         else:
-            raise ValueError('The action argument must be a valid removal Action.')
+            raise ValueError('The action argument must be a valid removal WarnAction.')
 
         DataAccess.delete_warning(target_member.id, delete_newest)
         warning_count -= 1

@@ -32,6 +32,24 @@
           "description": "View the number of warnings attached to the user."
         }
       ]
+    },
+    "role": {
+      "command": "role <action> <*optional:* target_role>",
+      "description": "Performs the specified action with the named role to the user that sent the message.",
+      "details": [
+        {
+          "parameter": "action: add",
+          "description": "Add the specified role to the requesting user."
+        },
+        {
+          "parameter": "action: remove",
+          "description": "Remove the specified role from the requesting user."
+        },
+        {
+          "parameter": "action: list",
+          "description": "List all the available roles that can be added or removed. Does not require a target role."
+        }
+      ]
     }
   }
 }

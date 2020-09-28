@@ -16,9 +16,12 @@ if __name__ == '__main__':
 
     # Add the necessary cogs
     Base.ConfiguredCog.logger.info('Attaching functionality...')
+
+    # Do not disable
     Base.ConfiguredCog.logger.debug('Adding UserInteraction Cog.')
     discord_bot.add_cog(UserInteractionCog(discord_bot))
 
+    # Do not disable
     Base.ConfiguredCog.logger.debug('Adding Help Cog.')
     discord_bot.add_cog(HelpCog(discord_bot))
 

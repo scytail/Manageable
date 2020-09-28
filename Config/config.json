@@ -14,7 +14,7 @@
         "url": "https://github.com/scytail/Manageable",
         "description": "A friendly, easy-to-use discord management bot. Please use the `help` command to see available commands."
       }
-    }
-  },
-  "role_whitelist": []
+    },
+    "role_whitelist": []
+  }
 }

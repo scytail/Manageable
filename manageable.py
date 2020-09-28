@@ -25,14 +25,23 @@ if __name__ == '__main__':
     Base.ConfiguredCog.logger.debug('Adding Help Cog.')
     discord_bot.add_cog(HelpCog(discord_bot))
 
-    Base.ConfiguredCog.logger.debug('Adding Tag Cog.')
-    discord_bot.add_cog(TagCog(discord_bot))
+    enable_cog = Base.is_cog_enabled('tag', Base.ConfiguredCog.config)
+    Base.ConfiguredCog.logger.debug(f'Tag cog check resulted in: {enable_cog}.')
+    if enable_cog or enable_cog is None:
+        Base.ConfiguredCog.logger.debug('Adding Tag Cog.')
+        discord_bot.add_cog(TagCog(discord_bot))
 
-    Base.ConfiguredCog.logger.debug('Adding UserWarn Cog.')
-    discord_bot.add_cog(UserWarnCog(discord_bot))
+    enable_cog = Base.is_cog_enabled('warn', Base.ConfiguredCog.config)
+    Base.ConfiguredCog.logger.debug(f'UserWarn cog check resulted in: {enable_cog}.')
+    if enable_cog or enable_cog is None:
+        Base.ConfiguredCog.logger.debug('Adding UserWarn Cog.')
+        discord_bot.add_cog(UserWarnCog(discord_bot))
 
-    Base.ConfiguredCog.logger.debug('Adding RoleRequestCog Cog.')
-    discord_bot.add_cog(RoleRequestCog(discord_bot))
+    enable_cog = Base.is_cog_enabled('role', Base.ConfiguredCog.config)
+    Base.ConfiguredCog.logger.debug(f'RoleRequest cog check resulted in: {enable_cog}.')
+    if enable_cog or enable_cog is None:
+        Base.ConfiguredCog.logger.debug('Adding RoleRequest Cog.')
+        discord_bot.add_cog(RoleRequestCog(discord_bot))
 
     # Run the bot
     Base.ConfiguredCog.logger.warning('Launching Manageable with the specified bot token.')

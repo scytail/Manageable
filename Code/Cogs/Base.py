@@ -1,6 +1,7 @@
 import json
 import logging
 from discord.ext import commands
+from typing import Optional
 
 # The config file to load data from.
 CONFIG_FILE = 'Config/config.json'
@@ -72,6 +73,33 @@ def load_config(filename: str) -> dict:
     return dict(json_dict)
 
 
+def is_cog_enabled(cog_name: str, config_dict: dict) -> Optional[bool]:
+    """Checks to see if the given cog name is enabled in the provided dictionary
+
+    Parameters
+    ----------
+    cog_name        str     The name of the cog to validate in the config
+    config_dict     dict    The config dictionary to check enabled settings
+
+    Returns
+    -------
+    Optional[bool]  Returns true if true in the dictionary, or false for anything else. If it cannot find the data in
+                    the provided config, returns None.
+    """
+
+    if 'features' not in config_dict['content'] or \
+       cog_name not in config_dict['content']['features']:
+        # didn't find the cog in the config, return nothing to convey this issue.
+        return None
+
+    # There's a chance the user accidentally sets the data to something other than a boolean. If we find a "true" value,
+    # we should return true, otherwise we should return false. This ensures method return type integrity.
+    if config_dict['content']['features'][cog_name]:
+        return True
+    else:
+        return False
+
+
 class ConfiguredCog(commands.Cog):
     """A Base class containing some general data and methods for all the implemented Cogs to use.
 
@@ -122,3 +150,17 @@ class ConfiguredCog(commands.Cog):
 
         color_hex_code = color_hex_code[1:]  # Crop out the hash tag at the start
         return int(color_hex_code, 16)
+
+    def is_cog_enabled(self, cog_name: str) -> Optional[bool]:
+        """Exposes base methodology of is_cog_enabled in the class structure, using the class's embedded config.
+
+        Parameters
+        ----------
+        cog_name    str     The cog to check if enabled
+
+        Returns
+        -------
+        Optional[bool]  Returns true if true in the dictionary, or false for anything else. If it cannot find the data
+                        in the provided config, returns None.
+        """
+        return is_cog_enabled(cog_name, self.config)

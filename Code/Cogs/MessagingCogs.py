@@ -157,8 +157,7 @@ class HelpCog(ConfiguredCog):
 
         return help_text_dict
 
-    @staticmethod
-    def _build_help_summary(help_dict: dict) -> list:
+    def _build_help_summary(self, help_dict: dict) -> list:
         """Takes the help data and builds a list of embeds to output to the user as needed
 
         Parameters
@@ -179,32 +178,33 @@ class HelpCog(ConfiguredCog):
         for command_key in help_dict['command_list']:
             command_summary = help_dict['command_list'][command_key]
 
-            # Check if first command on the page
-            if command_index % ConfiguredCog.config['help_commands_per_page'] == 0:
-                embed = Embed(title=help_dict['title'],
-                              description=help_dict['description'],
-                              color=help_dict['color'])
+            if self.is_cog_enabled(command_key) or \
+               self.is_cog_enabled(command_key) is None:
+                # Check if first command on the page
+                if command_index % ConfiguredCog.config['help_commands_per_page'] == 0:
+                    embed = Embed(title=help_dict['title'],
+                                  description=help_dict['description'],
+                                  color=help_dict['color'])
 
-            # Add fields
-            embed.add_field(name=command_summary['command'], value=command_summary['description'], inline=False)
+                # Add fields
+                embed.add_field(name=command_summary['command'], value=command_summary['description'], inline=False)
 
-            # Save the embed as a page if we've finished the page
-            if command_index % commands_per_embed == commands_per_embed - 1 or \
-               command_index == len(help_dict['command_list'])-1:
-                # Build the footer
-                total_pages = ceil(len(help_dict['command_list']) / ConfiguredCog.config['help_commands_per_page'])
-                embed.set_footer(text=f'Page {page_num}/{total_pages}')
-                # Add the embed to the list
-                embed_list.append(embed)
-                # Increment the page counter
-                page_num += 1
+                # Save the embed as a page if we've finished the page
+                if command_index % commands_per_embed == commands_per_embed - 1 or \
+                   command_index == len(help_dict['command_list'])-1:
+                    # Build the footer
+                    total_pages = ceil(len(help_dict['command_list']) / ConfiguredCog.config['help_commands_per_page'])
+                    embed.set_footer(text=f'Page {page_num}/{total_pages}')
+                    # Add the embed to the list
+                    embed_list.append(embed)
+                    # Increment the page counter
+                    page_num += 1
 
-            command_index += 1
+                command_index += 1
 
         return embed_list
 
-    @staticmethod
-    def _build_help_detail(help_dict: dict, command_id: str) -> list:
+    def _build_help_detail(self, help_dict: dict, command_id: str) -> list:
         """Builds the embed data for the command detail.
 
         Parameters
@@ -219,7 +219,9 @@ class HelpCog(ConfiguredCog):
         """
 
         embed_list: list = []
-        if command_id not in help_dict['command_list']:
+        if command_id not in help_dict['command_list'] or \
+           not (self.is_cog_enabled(command_id) or
+                self.is_cog_enabled(command_id) is None):
             # Command not found, return an error embed to the user
             embed = Embed(title=command_id, description='Command not found', color=help_dict['color'])
             embed_list.append(embed)

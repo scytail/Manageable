@@ -11,8 +11,9 @@ Currently, Manageable has these commands:
 | :------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `help <optional: command>`                        | DMs a paginated display enumerating all the available bot commands, or a single command's details if specified.                                                                                                                                                                              |
 | `tag <optional: name>`                            | Posts an embed in chat with the given details provided in the config file.                                                                                                                                                                                                                   |
-| `warn <apply;resolve;undo;view> <user>` | _mod only:_ Performs the specified action to the defined user. Actions can be `apply` to give a user another warning, `resolve` remove the oldest warning for that user, `undo` to remove the newest warning for that user, and `view` to display the amount of warnings given to that user. |
-| `role <add;remove;list> <optional: role_name>`    | performs the specified action with the role (when provided) to the calling user. Actions can be `add` to add a specified role to yourself, `remove` to remove the specified role from yourself, and `list` to list all the available roles that can be added/removed with the command.       | 
+| `warn <apply;resolve;undo;view> <user>`           | _mod only:_ Performs the specified action to the defined user. Actions can be `apply` to give a user another warning, `resolve` remove the oldest warning for that user, `undo` to remove the newest warning for that user, and `view` to display the amount of warnings given to that user. |
+| `role <add;remove;list> <optional: role_name>`    | Performs the specified action with the role (when provided) to the calling user. Actions can be `add` to add a specified role to yourself, `remove` to remove the specified role from yourself, and `list` to list all the available roles that can be added/removed with the command.       |
+| `accept`                                          | When called from a config-set channel, assigns a config-set role to the requesting user and deletes their message from the chat.                                                                                                                                                             |
 
 ## Setup
 
@@ -29,13 +30,14 @@ _**Permissions:**_
 
 Manageable will need these permissions to run. Omitting any of these permissions may cause the bot to not function correctly.
 
-| Requirement   | Reason                                                                          |
-| :-------------| :------------------------------------------------------------------------------ |
-| View Channels | The bot needs to be able to see the channels so it can watch them for commands. |
-| Send Messages | The bot needs to be able to send server message and DMs to respond to commands. |
-| Embed Links   | The bot needs to be able to embed links to display some commands correctly.     |
-| Add Reactions | The bot uses reactions to control pagination of its help command.               |
-| Manage Roles  | The bot needs to be able to manage roles to add and remove roles from users.    |
+| Requirement     | Reason                                                                          |
+| :-------------- | :------------------------------------------------------------------------------ |
+| Manage Roles    | The bot needs to be able to manage roles to add and remove roles from users.    |
+| View Channels   | The bot needs to be able to see the channels so it can watch them for commands. |
+| Send Messages   | The bot needs to be able to send server message and DMs to respond to commands. |
+| Manage Messages | The bot needs to be able to delete messages for the `accept` command            |
+| Embed Links     | The bot needs to be able to embed links to display some commands correctly.     |
+| Add Reactions   | The bot uses reactions to control pagination of its help command.               |
 
 ##### 4) Configure the Bot Functionality
 Open `config.json`, located in the `Config` folder. Paste in the bot's token you received from discord in the `token` line, and configure any other information desired. Documentation for the configuration file is found in a later section.
@@ -58,4 +60,6 @@ This is the main json configuration file for Manageable, and contains all the ba
     * `title`: _(required)_ A string value denoting the title of the embed.
     * `url`: _(optional)_ A valid URL to which the embed will create a clickable link.
     * `description`: _(optional)_ A string denoting the description text of the discord embed
-* `/content/role_whitelist`: A list of strings representing all the role names (below the bot's role on the server) that the bot can add or remove from users that request them. 
+* `/content/role_whitelist`: A list of strings representing all the role names (below the bot's role on the guild) that the bot can add or remove from users that request them.
+* `/content/airlock_channel`: The string name of the guild channel that the bot will watch the `accept` command for.
+* `/content/airlock_release_role`: The string name of the guild role (which must be below the bot's role) that will be assigned to the user when calling the `accept` command.

@@ -81,7 +81,7 @@ class RoleRequestCog(ConfiguredCog):
 
         if action == RequestAction.ADD.value:
             # find role
-            role = self._find_role_in_guild(role_query, ctx.guild)
+            role = self.find_role_in_guild(role_query, ctx.guild)
             if not role:
                 await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
                                f'Please check your spelling and try again.')
@@ -93,14 +93,14 @@ class RoleRequestCog(ConfiguredCog):
                 return
 
             # add role to user
-            if self._member_contains_role(role.name, ctx.author):
+            if self.member_contains_role(role.name, ctx.author):
                 message = f'You already have that role.'
             else:
                 await ctx.author.add_roles(role, reason='Role added via Manageable bot instance.')
                 message = f'You now have the `{role.name}` role.'
         elif action == RequestAction.REMOVE.value:
             # find role
-            role = self._find_role_in_guild(role_query, ctx.guild)
+            role = self.find_role_in_guild(role_query, ctx.guild)
             if not role:
                 await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
                                f'Please check your spelling and try again.')
@@ -112,7 +112,7 @@ class RoleRequestCog(ConfiguredCog):
                 return
 
             # remove role from user
-            if self._member_contains_role(role.name, ctx.author):
+            if self.member_contains_role(role.name, ctx.author):
                 await ctx.author.remove_roles(role, reason='Role removed via Manageable bot instance.')
                 message = f'You no longer have the `{role.name}` role.'
             else:
@@ -121,7 +121,7 @@ class RoleRequestCog(ConfiguredCog):
             # list all available roles
             message = "__**Available roles to add/remove:**__"
             for role_name in self.config["content"]["role_whitelist"]:
-                if self._find_role_in_guild(role_name, ctx.guild):
+                if self.find_role_in_guild(role_name, ctx.guild):
                     message += f"\n{role_name}"
         else:
             message = f'Unknown role command `{action}`, please re-enter your command and try again.'
@@ -129,7 +129,7 @@ class RoleRequestCog(ConfiguredCog):
         await ctx.send(message)
 
     @staticmethod
-    def _find_role_in_guild(role_name_query: str, guild: Guild) -> Optional[Role]:
+    def find_role_in_guild(role_name_query: str, guild: Guild) -> Optional[Role]:
         """Finds a role with the provided name in a guild.
 
         Notes
@@ -171,7 +171,7 @@ class RoleRequestCog(ConfiguredCog):
         return True
 
     @staticmethod
-    def _member_contains_role(role_name_query: str, member: Member) -> bool:
+    def member_contains_role(role_name_query: str, member: Member) -> bool:
         """Validates that the provided member has a role with the given name.
 
         Parameters
@@ -190,3 +190,50 @@ class RoleRequestCog(ConfiguredCog):
 
         # didn't find the role
         return False
+
+
+class AirlockCog(ConfiguredCog):
+    """A class supporting the airlock functionality (including the `accept` command)
+
+    Methods
+    -------
+    accept
+    """
+
+    @commands.command()
+    async def accept(self, ctx: commands.context):
+        """The origin point for the accept command
+
+        Parameters
+        ----------
+        ctx:        discord.ext.commands.context    The command context.
+        """
+
+        # Check to make sure the command comes from a predefined channel.
+        # If it doesn't, the command fails silently.
+        airlock_channel_name = ConfiguredCog.config['content']['airlock_channel']
+        if ctx.guild is None or ctx.channel.name != airlock_channel_name:
+            self.logger.debug(f"Airlock release command was attempted to be called from an invalid location.")
+            await ctx.send(f'This command can only be accessed from the #{airlock_channel_name} channel.')
+            return
+
+        # Give the message sender a predefined role
+        role_name = ConfiguredCog.config['content']['airlock_release_role']
+        role = RoleRequestCog.find_role_in_guild(role_name, ctx.guild)
+        if not role:
+            self.logger.error(f"Encountered an issue attempting to resolve the airlock role specified in the config.")
+            await ctx.send(f"There was an issue finding the role to give to the sender.")
+            return
+
+        if RoleRequestCog.member_contains_role(role.name, ctx.author):
+            self.logger.warning(f'{ctx.author.name} requested an airlock release when they already had the role.')
+            await ctx.send('You already have the airlock release role.')
+            return
+        else:
+            self.logger.debug(f'Released {ctx.author.name} from the airlock.')
+            await ctx.author.add_roles(role, reason='User requested release from the airlock channel.')
+
+        # Delete the message that was sent to trigger the command
+        self.logger.debug('Deleting airlock release message.')
+        await ctx.message.delete()
+        return

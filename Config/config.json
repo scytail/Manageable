@@ -10,7 +10,8 @@
     "features": {
       "tag": true,
       "warn": true,
-      "role": true
+      "role": true,
+      "airlock": false
     },
     "tags": {
       "about": {
@@ -20,6 +21,8 @@
         "description": "A friendly, easy-to-use discord management bot. Please use the `help` command to see available commands."
       }
     },
-    "role_whitelist": []
+    "role_whitelist": [],
+    "airlock_channel": "Airlock",
+    "airlock_release_role": "Member"
   }
 }

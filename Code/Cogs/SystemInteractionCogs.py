@@ -1,7 +1,7 @@
 from enum import Enum
 import traceback
 from discord.ext import commands
-from discord import Role, Guild, Member
+from discord import Role, Guild, Member, Message
 from typing import Optional
 from Code.Cogs.Base import ConfiguredCog
 
@@ -206,7 +206,7 @@ class AirlockCog(ConfiguredCog):
 
         Parameters
         ----------
-        ctx:        discord.ext.commands.context    The command context.
+        ctx:    discord.ext.commands.context    The command context.
         """
 
         # Check to make sure the command comes from a predefined channel.
@@ -233,7 +233,18 @@ class AirlockCog(ConfiguredCog):
             self.logger.debug(f'Released {ctx.author.name} from the airlock.')
             await ctx.author.add_roles(role, reason='User requested release from the airlock channel.')
 
-        # Delete the message that was sent to trigger the command
-        self.logger.debug('Deleting airlock release message.')
-        await ctx.message.delete()
-        return
+    @commands.Cog.listener()
+    async def on_message(self, message: Message):
+        """Watches for any messages sent in the airlock channel, and deletes them after five seconds.
+
+           Parameters
+           ----------
+           message:     discord.Message     The message that was sent in a place that the bot can see
+           """
+        airlock_channel_name = ConfiguredCog.config['content']['airlock_channel']
+        airlock_channel_delete_delay = 5.0  # delay in seconds
+
+        if message.guild is not None and message.channel.name == airlock_channel_name:
+            # delete any messages coming into the airlock channel
+            self.logger.debug('Deleting a message in the airlock channel.')
+            await message.delete(delay=airlock_channel_delete_delay)

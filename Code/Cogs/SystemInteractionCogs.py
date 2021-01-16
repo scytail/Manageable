@@ -59,7 +59,9 @@ class RoleRequestCog(ConfiguredCog):
 
     Methods
     -------
-    role    The origin point for the `role` command.
+    role                    The origin point for the `role` command.
+    find_role_in_guild      Searches for the name of a role in the bot's guild.
+    member_contains_role    Checks to see if a given member has a certain role or not.
     """
 
     @commands.command()

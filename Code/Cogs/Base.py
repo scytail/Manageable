@@ -61,7 +61,7 @@ def load_config(filename: str) -> dict:
 
     Exceptions
     ----------
-    ValueError  if the filename is empty or not a vaild string, this method will throw a value error
+    ValueError  if the filename is empty or not a valid string, this method will throw a value error
     """
 
     if filename is None or filename == '' or type(filename) is not str:

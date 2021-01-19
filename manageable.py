@@ -1,4 +1,5 @@
 from discord.ext.commands.bot import Bot
+from discord import Intents
 import Code.Cogs.Base as Base
 from Code.Cogs.ModToolsCogs import UserWarnCog
 from Code.Cogs.MessagingCogs import HelpCog, TagCog
@@ -9,7 +10,14 @@ if __name__ == '__main__':
     # Build the bot
     Base.ConfiguredCog.logger.info('Constructing Manageable bot...')
     Base.ConfiguredCog.logger.debug(f'Building bot.')
-    discord_bot = Bot(Base.ConfiguredCog.config['command_prefix'])
+
+    intents = Intents.default()
+    require_member_intent = Base.is_cog_enabled('airlock', Base.ConfiguredCog.config)
+    Base.ConfiguredCog.logger.debug(f'Airlock Cog check resulted in: {require_member_intent} (for privileged intent).')
+    if require_member_intent:
+        intents.members = True
+
+    discord_bot = Bot(Base.ConfiguredCog.config['command_prefix'], intents=intents)
 
     Base.ConfiguredCog.logger.debug('Removing built-in help command.')
     discord_bot.remove_command('help')  # We are providing our own help command

@@ -92,8 +92,8 @@ class UserWarnCog(ConfiguredCog):
         user_warnings = DataAccess.lookup_warnings_by_discord_id(target_member.id)
 
         for warning in user_warnings:
-            if datetime.now() - timedelta(days=warning_duration) > warning.Warning_Stamp:
-                DataAccess.delete_warning(warning.WarningTable.Warning_Id)
+            if warning is not None and datetime.now() - timedelta(days=warning_duration) > warning.Warning_Stamp:
+                DataAccess.delete_warning(warning.Warning_Id)
 
     @staticmethod
     def _warn_member(target_member: Member) -> int:
@@ -157,7 +157,7 @@ class UserWarnCog(ConfiguredCog):
         else:
             raise ValueError('The action argument must be a valid removal WarnAction.')
 
-        DataAccess.delete_warning(target_member.id, delete_newest)
+        DataAccess.delete_warning_by_discord_id(target_member.id, delete_newest)
         warning_count -= 1
 
         return warning_count
@@ -174,7 +174,15 @@ class UserWarnCog(ConfiguredCog):
         -------
         int     The number of total warnings assigned to the member.
         """
-        return DataAccess.lookup_warnings_by_discord_id(target_member.id).count()
+
+        warning_rows = DataAccess.lookup_warnings_by_discord_id(target_member.id)
+
+        if warning_rows.first() is None:
+            count = 0
+        else:
+            count = warning_rows.count()
+
+        return count
 
     def _find_discord_member(self, user_query: str) -> list:
         """Finds the discord information for the users matching the provided query.
@@ -205,10 +213,17 @@ class UserWarnCog(ConfiguredCog):
         if not member_matches:
             member_matches = []
             for member in self.bot.get_all_members():
+                member_already_in_match_list = False
                 if member.display_name.upper() == user_query.upper() or \
                         (member.nick is not None and member.nick.upper() == user_query.upper()) or \
                         member.name.upper() == user_query.upper():
-                    member_matches.append(member)
+                    # Only add a member if the ID (which is unique to a discord user) isn't already in the list
+                    for member_match in member_matches:
+                        if member.id == member_match.id:
+                            member_already_in_match_list = True
+                            break
+                    if not member_already_in_match_list:
+                        member_matches.append(member)
 
         return member_matches
 

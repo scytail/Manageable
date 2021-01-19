@@ -80,7 +80,7 @@ class DatabaseMethod(Decorator):
             return_data = super(DatabaseMethod, self).run(*args, **kwargs)  # Execute the method
             if not external_session:
                 session.commit()
-        except:
+        except Exception as N:
             # Error occurred at some point, roll back the database and throw an error
             if not external_session:
                 session.rollback()
@@ -181,6 +181,17 @@ def lookup_warnings_by_discord_id(discord_id: int, **kwargs) -> Query:
 
 
 @DatabaseMethod
+def lookup_warning_by_warning_id(warning_id: int, **kwargs) -> Query:
+    session = _get_session(kwargs)
+
+    warning_row = session.query(WarningTable). \
+        select_from(WarningTable). \
+        filter(WarningTable.Warning_Id == warning_id).first()
+
+    return warning_row
+
+
+@DatabaseMethod
 def add_warning(user_id: int, **kwargs) -> int:
     """
 
@@ -207,12 +218,12 @@ def add_warning(user_id: int, **kwargs) -> int:
 
 
 @DatabaseMethod
-def delete_warning(discord_id: int, remove_newest: bool = False, **kwargs):
+def delete_warning_by_discord_id(discord_id: int, remove_newest: bool = False, **kwargs):
     """Deletes a warning from the specified discord member.
 
     Parameters
     ----------
-    discord_id:     int     The unique discord id of the user to delete a warning from
+    discord_id:     int     The unique Discord ID of the user to delete a warning from
     remove_newest:  bool    Toggles whether to remove the newest warning, rather than the oldest (defaults to False)
     kwargs:         dict    Keyword arguments for the method, must include a `session` argument.
     """
@@ -226,4 +237,23 @@ def delete_warning(discord_id: int, remove_newest: bool = False, **kwargs):
     else:
         warning_to_remove = warning_list.order_by(WarningTable.Warning_Stamp.asc()).first()
 
-    session.delete(warning_to_remove)
+    if warning_to_remove is not None:
+        session.delete(warning_to_remove)
+
+
+@DatabaseMethod
+def delete_warning(warning_id: int, **kwargs):
+    """Deletes a warning with the specified warning ID
+
+    Parameters
+    ----------
+    warning_id:     int     The unique warning ID to delete
+    kwargs:         dict    Keyword arguments for the method, must include a `session` argument.
+    """
+
+    session = _get_session(kwargs)
+
+    warning_to_remove = lookup_warning_by_warning_id(warning_id, session=session)
+
+    if warning_to_remove is not None:
+        session.delete(warning_to_remove)

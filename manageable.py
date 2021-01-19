@@ -12,8 +12,9 @@ if __name__ == '__main__':
     Base.ConfiguredCog.logger.debug(f'Building bot.')
 
     intents = Intents.default()
-    require_member_intent = Base.is_cog_enabled('airlock', Base.ConfiguredCog.config)
-    Base.ConfiguredCog.logger.debug(f'Airlock Cog check resulted in: {require_member_intent} (for privileged intent).')
+    # We need the member intent for the warn command
+    require_member_intent = Base.is_cog_enabled('warn', Base.ConfiguredCog.config)
+    Base.ConfiguredCog.logger.debug(f'UserWarn Cog check resulted in: {require_member_intent} (for privileged intent).')
     if require_member_intent:
         intents.members = True
 

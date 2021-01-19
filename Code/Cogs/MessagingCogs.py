@@ -183,7 +183,8 @@ class HelpCog(ConfiguredCog):
                 # Check if first command on the page
                 if command_index % ConfiguredCog.config['help_commands_per_page'] == 0:
                     embed = Embed(title=help_dict['title'],
-                                  description=help_dict['description'],
+                                  description=help_dict['description'].format(
+                                      prefix=ConfiguredCog.config['command_prefix']),
                                   color=help_dict['color'])
 
                 # Add fields
@@ -192,15 +193,19 @@ class HelpCog(ConfiguredCog):
                 # Save the embed as a page if we've finished the page
                 if command_index % commands_per_embed == commands_per_embed - 1 or \
                    command_index == len(help_dict['command_list'])-1:
-                    # Build the footer
-                    total_pages = ceil(len(help_dict['command_list']) / ConfiguredCog.config['help_commands_per_page'])
-                    embed.set_footer(text=f'Page {page_num}/{total_pages}')
                     # Add the embed to the list
                     embed_list.append(embed)
                     # Increment the page counter
                     page_num += 1
 
                 command_index += 1
+
+        # Build the footer, now that we have a fully compiled list of all the ENABLED commands
+        total_pages = len(embed_list)
+        page_num = 1
+        for embed in embed_list:
+            embed.set_footer(text=f'Page {page_num}/{total_pages}')
+            page_num += 1
 
         return embed_list
 

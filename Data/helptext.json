@@ -50,6 +50,10 @@
           "description": "List all the available roles that can be added or removed. Does not require a target role."
         }
       ]
+    },
+    "accept": {
+      "command": "accept",
+      "description": "When executed from a specific channel, assigns a user to a specific 'member' role."
     }
   }
 }

@@ -51,7 +51,7 @@
         }
       ]
     },
-    "accept": {
+    "airlock": {
       "command": "accept",
       "description": "When executed from a specific channel, assigns a user to a specific 'member' role."
     }

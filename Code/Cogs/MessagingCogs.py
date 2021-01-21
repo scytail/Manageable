@@ -173,7 +173,6 @@ class HelpCog(ConfiguredCog):
         command_index: int = 0
         embed = None
         embed_list: list = []
-        page_num: int = 1
 
         for command_key in help_dict['command_list']:
             command_summary = help_dict['command_list'][command_key]
@@ -181,7 +180,7 @@ class HelpCog(ConfiguredCog):
             if self.is_cog_enabled(command_key) or \
                self.is_cog_enabled(command_key) is None:
                 # Check if first command on the page
-                if command_index % ConfiguredCog.config['help_commands_per_page'] == 0:
+                if command_index % commands_per_embed == 0:
                     embed = Embed(title=help_dict['title'],
                                   description=help_dict['description'].format(
                                       prefix=ConfiguredCog.config['command_prefix']),
@@ -191,14 +190,17 @@ class HelpCog(ConfiguredCog):
                 embed.add_field(name=command_summary['command'], value=command_summary['description'], inline=False)
 
                 # Save the embed as a page if we've finished the page
-                if command_index % commands_per_embed == commands_per_embed - 1 or \
-                   command_index == len(help_dict['command_list'])-1:
-                    # Add the embed to the list
+                if (command_index + 1) % commands_per_embed == 0:
+                    # Add the embed to the list and clear the current embed (to prevent double-adding the embed)
                     embed_list.append(embed)
-                    # Increment the page counter
-                    page_num += 1
+                    embed = None
 
                 command_index += 1
+
+        # Save the last embed as a page if it hasn't already been saved yet
+        if embed is not None:
+            # Add the embed to the list and clear the current embed (to prevent double-adding the embed)
+            embed_list.append(embed)
 
         # Build the footer, now that we have a fully compiled list of all the ENABLED commands
         total_pages = len(embed_list)

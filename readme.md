@@ -15,6 +15,13 @@ Currently, Manageable has these commands:
 | `role <add;remove;list> <optional: role_name>`    | Performs the specified action with the role (when provided) to the calling user. Actions can be `add` to add a specified role to yourself, `remove` to remove the specified role from yourself, and `list` to list all the available roles that can be added/removed with the command.       |
 | `accept`                                          | When called from a config-set channel, assigns a config-set role to the requesting user and deletes their message from the chat.                                                                                                                                                             |
 
+Additionally, Manageable also has these additional features:
+
+| Feature           | Description                                                                                                            |
+| :---------------: | :--------------------------------------------------------------------------------------------------------------------: | 
+| Daily Prompts     | Pulls the daily prompt from [r/SketchDaily](https://reddit.com/r/sketchdaily) and announces it in a specified channel. |
+| Feature Disabling | Any feature or command can be selectively disabled in the config if the functionality is not needed.                   |
+
 ## Setup
 
 ##### 1) Install Python

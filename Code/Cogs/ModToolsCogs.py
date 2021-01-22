@@ -1,7 +1,8 @@
+import urllib.request
 from enum import Enum
 from datetime import datetime, timedelta
-from discord import Member
-from discord.ext import commands
+from discord import Member, Embed
+from discord.ext import commands, tasks
 from Code.Cogs.Base import ConfiguredCog
 from Code.Data import DataAccess
 
@@ -254,3 +255,129 @@ class UserWarnCog(ConfiguredCog):
         multiple_found_message += f'\nPlease try again, using the unique id for the user you wish to warn.'
 
         return multiple_found_message
+
+
+class AutoDrawingPrompt(ConfiguredCog):
+    """A class supporting the Drawing Prompt automatic posting functionality
+
+        Methods
+        -------
+        __init__    Overridden method from base class to set up and start the automated task
+        cog_unload  Overridden method from commands.Cog to stop the task
+        """
+
+    def __init__(self, bot: commands.Bot):
+        """Initializes the cog and starts the automated task
+
+        Parameters
+        ----------
+        bot:    discord.ext.commands.Bot    A discord bot instance which will be saved within the class instance.
+        """
+
+        super().__init__(bot)
+        self.current_prompt = ''
+
+        # Start the task
+        self._get_sketch_prompt.start()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # Run the task so that we aren't waiting for the task
+        await self._get_sketch_prompt()
+
+    def cog_unload(self):
+        """Overridden from commands.Cog; stops the automated task."""
+        self._get_sketch_prompt.cancel()
+
+    @staticmethod
+    def _get_neat_date(date: datetime) -> str:
+        """Takes a datetime object and converts the day and month into a cleanly formatted string.
+
+        Parameters
+        ----------
+        date:   datetime    The datetime object to convert to a neat string
+
+        Returns
+        -------
+        str     The formatted month and day in the format `[Month] [Numeric Day][st|nd|er]`
+        """
+
+        month_selector = ["January", "February", "March", "April", "May", "June", "July", "August", "September",
+                          "October", "November", "December"]
+        month_string = month_selector[date.month - 1]
+
+        day = date.day
+
+        if day == 1 or day == 21 or day == 31:
+            suffix = "st"
+        elif day == 2 or day == 22:
+            suffix = "nd"
+        elif day == 3 or day == 23:
+            suffix = "rd"
+        else:
+            suffix = "th"
+
+        neat_date = f"{month_string} {day}{suffix}"
+        return neat_date
+
+    def _get_daily_drawing_prompt(self) -> str:
+        """Gets today's drawing prompt from reddit.com/r/SketchDaily, if it exists.
+
+        Returns
+        -------
+        str     The daily drawing prompt if there is one found for today; or an empty string if none for today was found
+        """
+
+        site = urllib.request.urlopen(
+            urllib.request.Request("https://reddit.com/r/SketchDaily/new", headers={'User-Agent': 'Mozilla/5.0'}))
+        site_str = site.read().decode('utf-8')
+
+        # search for today's theme on the skd site
+        now = datetime.now()
+        neat_today_date = self._get_neat_date(now)
+        loc = site_str.find(neat_today_date + " - ")
+
+        # if we can't find today's theme, return a blank string
+        if loc == -1:
+            return ''
+            # FIND YESTERDAY'S THEME:
+            # yesterday = datetime.now() - timedelta(days=1)
+            # neat_today_date = self._get_neat_date(yesterday)
+            # loc = site_str.find(neat_today_date + " - ")
+
+        site_str = site_str[loc:]
+        site_str = site_str[:site_str.find('<')]
+        if len(site_str) > 100:
+            site_str = site_str[:100]
+
+        return site_str
+
+    @tasks.loop(minutes=30)
+    async def _get_sketch_prompt(self):
+        """A looping task to query the web for today's sketch prompt and announce it in a given discord channel if it
+           was found. If today's prompt was already announced, or if the prompt for today wasn't found, nothing is
+           announced in the channel.
+        """
+
+        drawing_prompt = self._get_daily_drawing_prompt()
+
+        if drawing_prompt == '':
+            # No drawing prompt found for today; don't do anything
+            return
+        elif not drawing_prompt == self.current_prompt:
+            # The prompt we pulled does not match what we found before, so post the new text.
+            for channel in self.bot.get_all_channels():
+                if channel.name == ConfiguredCog.config['content']['daily_prompt_channel']:
+                    # Build the prompt message
+                    color = ConfiguredCog.convert_color(ConfiguredCog.config['content']['prompt_color'])
+                    title = 'Prompt for today, courtesy of r/SketchDaily'
+                    url = 'https://reddit.com/r/SketchDaily'
+                    description = drawing_prompt
+                    message = Embed(color=color, title=title, url=url, description=description)
+
+                    # Send the message
+                    await channel.send(embed=message)
+
+                    # Note down that we found today's prompt (so as not to re-send it)
+                    self.current_prompt = drawing_prompt
+

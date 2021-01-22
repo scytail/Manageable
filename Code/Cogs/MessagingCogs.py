@@ -3,7 +3,6 @@ import json
 from discord.ext import commands
 from discord import Embed, Message
 from Code.Cogs.Base import ConfiguredCog
-from math import ceil
 
 
 class TagCog(ConfiguredCog):

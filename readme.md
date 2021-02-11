@@ -52,7 +52,7 @@ This is the main json configuration file for Manageable, and contains all the ba
 
 * `/token`: A string token given by Discord after configuring your bot with their developer portal. Be sure not to share this token with anyone.
 * `/command_prefix`: A string prefix to address the bot so that it knows a command is being run.
-* `/mod_roles`: A string list of all the role names (case sensitive) that you'd like to be able to execute Manageable's moderator-only commands.
+* `/mod_roles`: A string list of all the role names (case-sensitive) that you'd like to be able to execute Manageable's moderator-only commands.
 * `/help_commands_per_page`: An integer denoting how many commands you'd like the help command to display per page.
 * `/warning_duration_days`: An integer denoting how many days you'd like warnings to persist before removal. Setting this value to zero means warnings will never decay.
 * `/verbose_logging`: A boolean value indicating whether to allow more verbose logging in the debug.log file. This does not impact console logging.

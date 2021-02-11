@@ -80,11 +80,11 @@ class DatabaseMethod(Decorator):
             return_data = super(DatabaseMethod, self).run(*args, **kwargs)  # Execute the method
             if not external_session:
                 session.commit()
-        except Exception as N:
+        except Exception as exception:
             # Error occurred at some point, roll back the database and throw an error
             if not external_session:
                 session.rollback()
-            raise
+            raise exception
         finally:
             if not external_session:
                 session.close()

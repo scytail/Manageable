@@ -12,7 +12,8 @@
       "warn": true,
       "role": true,
       "airlock": false,
-      "autoDrawingPrompt": false
+      "autoDrawingPrompt": false,
+      "cookieHunt": false
     },
     "tags": {
       "about": {
@@ -26,6 +27,8 @@
     "airlock_channel": "Airlock",
     "airlock_release_role": "Member",
     "prompt_color": "#4feb34",
-    "daily_prompt_channel": "daily-doodle"
+    "daily_prompt_channel": "daily-doodle",
+    "cookie_hunt_hour_variance": [24, 48],
+    "cookie_hunt_allowed_channels": ["chat"]
   }
 }

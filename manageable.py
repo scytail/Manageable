@@ -2,7 +2,7 @@ from discord.ext.commands.bot import Bot
 from discord import Intents
 import Code.Cogs.Base as Base
 from Code.Cogs.ModToolsCogs import UserWarnCog, AutoDrawingPrompt
-from Code.Cogs.MessagingCogs import HelpCog, TagCog
+from Code.Cogs.MessagingCogs import HelpCog, TagCog, CookieHuntCog
 from Code.Cogs.SystemInteractionCogs import UserInteractionCog, RoleRequestCog, AirlockCog
 
 
@@ -73,6 +73,14 @@ if __name__ == '__main__':
         discord_bot.add_cog(AutoDrawingPrompt(discord_bot))
     else:
         Base.ConfiguredCog.logger.debug('Skipping AutoDrawingPrompt Cog.')
+
+    enable_cog = Base.is_cog_enabled('cookieHunt', Base.ConfiguredCog.config)
+    Base.ConfiguredCog.logger.debug(f'CookieHunt Cog check resulted in: {enable_cog}.')
+    if enable_cog or enable_cog is None:
+        Base.ConfiguredCog.logger.debug('Adding CookieHunt Cog.')
+        discord_bot.add_cog(CookieHuntCog(discord_bot))
+    else:
+        Base.ConfiguredCog.logger.debug('Skipping CookieHunt Cog.')
 
     # Run the bot
     Base.ConfiguredCog.logger.warning('Launching Manageable with the specified bot token.')

@@ -2,14 +2,15 @@ import datetime
 import json
 from enum import Enum
 from random import randint, sample
+from typing import Optional
 from discord.ext import commands, tasks
-from discord import Embed, Message
-from discord.abc import GuildChannel
+from discord import Embed, Message, TextChannel
 from Code.Cogs.Base import ConfiguredCog
 from Code.Data import DataAccess
 
 
 class CookieHuntSugarOptions(Enum):
+    """An enum listing out all the available sugar command options."""
     HIGH = 'high'
 
 
@@ -285,8 +286,26 @@ class HelpCog(ConfiguredCog):
 
 
 class CookieHuntCog(ConfiguredCog):
-    # TODO: Document this class
+    """A class supporting the "Cookie Hunt" feature, including the `gimme` and `sugar` commands.
+
+    Methods
+    -------
+    __init__    Overridden method from ConfiguredCog to set up and start
+                the automated task to drop cookies periodically.
+    cog_unload  Overridden method from commands.Cog to stop the task.
+    on_ready    A listener method to execute the sketch prompt as soon as the cog is loaded and ready.
+    gimme       The origin point for the `gimme` command.
+    sugar       The origin point for the `sugar` command.
+    """
+
     def __init__(self, bot: commands.Bot):
+        """Initializes the cog and starts the automated task.
+
+        Parameters
+        ----------
+        bot:    discord.ext.commands.Bot    A discord bot instance which will be saved within the class instance.
+        """
+
         super().__init__(bot)
 
         # Init instance vars
@@ -299,6 +318,12 @@ class CookieHuntCog(ConfiguredCog):
 
     @commands.command()
     async def gimme(self, ctx: commands.Context):
+        """The origin point for the `gimme` command. Claims a cookie for the calling user if one has been dropped.
+
+        Parameters
+        ----------
+        ctx:    commands.Context    The command context.
+        """
         target_member = ctx.author
 
         if not self.cookie_available:
@@ -326,6 +351,15 @@ class CookieHuntCog(ConfiguredCog):
 
     @commands.command()
     async def sugar(self, ctx: commands.Context, options: str = None):
+        """The origin point for the `sugar` command. Shows relevant cookie count scores based on the options provided.
+
+        Parameters
+        ----------
+        ctx:        commands.Context    The command context.
+        options:    str                 The (optional) parameters for the sugar command,
+                                        as enumerated by the `CookieHuntSugarOptions` enumeration.
+        """
+
         # TODO: Implement command
         if options is not None:
             if options.lower() == CookieHuntSugarOptions.HIGH:
@@ -340,6 +374,10 @@ class CookieHuntCog(ConfiguredCog):
 
     @tasks.loop(hours=1)
     async def _check_to_send_cookie(self):
+        """A looping task to check if a cookie needs to be sent. Checks a few parameters such as a randomized time
+        delay and whether or not there's already an available cookie to claim. If all the parameters have been met,
+        picks a random channel from a configured list and drops a cookie into that channel for claiming.
+        """
         # If random number is None, pick random number between 24 and 48
         if self.cookie_drop_delay_hours is None or self.cookie_drop_delay_hours == 0:
             self._prep_cookie_drop()
@@ -363,9 +401,13 @@ class CookieHuntCog(ConfiguredCog):
                 self.cookie_available = True
 
                 await channel.send(embed=cookie_drop_embed)
+            else:
+                self.logger.error('No valid channels were found. Skipping drop.')
 
     @commands.Cog.listener()
     async def on_ready(self):
+        """Cog Listener to prep for a cookie drop on start."""
+
         # Prepare for a drop
         self._prep_cookie_drop()
 
@@ -375,6 +417,8 @@ class CookieHuntCog(ConfiguredCog):
         self._check_to_send_cookie.cancel()
 
     def _prep_cookie_drop(self):
+        """Sets up the class's instance variables for a new cookie drop in the future."""
+
         min_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][0]
         max_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][1]
         hour_delay = randint(min_hour, max_hour)
@@ -383,13 +427,25 @@ class CookieHuntCog(ConfiguredCog):
         self.cookie_timestamp = datetime.datetime.now()
         self.cookie_drop_delay_hours = hour_delay
 
-    def _pick_random_channel_to_send(self) -> [GuildChannel, None]:
+    def _pick_random_channel_to_send(self) -> Optional[TextChannel]:
+        """Takes the preconfigured list of available channels that we can drop a cookie into, and returns a possible
+        one.
+
+        Returns
+        -------
+        Optional[TextChannel]  The randomly selected channel to send a cookie to,
+                                or None if no valid options were found.
+        """
+
         # Shuffle the whole list of all the channels we can access, so that in case we can't find the first channel
         # that we randomly picked, we move on to the next one safely.
         random_channel_pick_list = sample(ConfiguredCog.config['content']['cookie_hunt_allowed_channels'],
                                           len(ConfiguredCog.config['content']['cookie_hunt_allowed_channels']))
         for selected_channel_name in random_channel_pick_list:
             for channel in self.bot.get_all_channels():
-                if channel.name == selected_channel_name:
+                if channel.name == selected_channel_name and isinstance(channel, TextChannel):
                     # Found a channel that matches the name in the config, therefore this is the random channel selected
                     return channel
+
+        # No valid channel options, return None
+        return None

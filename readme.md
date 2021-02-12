@@ -14,13 +14,16 @@ Currently, Manageable has these commands:
 | `warn <apply;resolve;undo;view> <user>`           | _mod only:_ Performs the specified action to the defined user. Actions can be `apply` to give a user another warning, `resolve` remove the oldest warning for that user, `undo` to remove the newest warning for that user, and `view` to display the amount of warnings given to that user. |
 | `role <add;remove;list> <optional: role_name>`    | Performs the specified action with the role (when provided) to the calling user. Actions can be `add` to add a specified role to yourself, `remove` to remove the specified role from yourself, and `list` to list all the available roles that can be added/removed with the command.       |
 | `accept`                                          | When called from a config-set channel, assigns a config-set role to the requesting user and deletes their message from the chat.                                                                                                                                                             |
+| `gimme`                                           | When the cookie hunt game is enabled and a cookie is dropped, claims the cookie and adds a point to the user.                                                                                                                                                                                |
+| `sugar <optional: high>`                          | Lists the number of cookies that the asking user has, if the option `high` is appended, lists the high scores of cookie collectors.                                                                                                                                                          |
 
 Additionally, Manageable also has these additional features:
 
-| Feature           | Description                                                                                                            |
-| :---------------: | :--------------------------------------------------------------------------------------------------------------------: | 
-| Daily Prompts     | Pulls the daily prompt from [r/SketchDaily](https://reddit.com/r/sketchdaily) and announces it in a specified channel. |
-| Feature Disabling | Any feature or command can be selectively disabled in the config if the functionality is not needed.                   |
+| Feature           | Description                                                                                                                             |
+| :---------------: | :-------------------------------------------------------------------------------------------------------------------------------------: | 
+| Daily Prompts     | Pulls the daily prompt from [r/SketchDaily](https://reddit.com/r/sketchdaily) and announces it in a specified channel.                  |
+| Feature Disabling | Any feature or command can be selectively disabled in the config if the functionality is not needed.                                    |
+| Cookie Hunt       | Randomly drops a cookie in a randomly selected channel for claiming with the `gimme` command. Play for high scores and bragging rights! |
 
 ## Setup
 
@@ -72,3 +75,5 @@ This is the main json configuration file for Manageable, and contains all the ba
 * `/content/role_whitelist`: A list of strings representing all the role names (below the bot's role on the guild) that the bot can add or remove from users that request them.
 * `/content/airlock_channel`: The string name of the guild channel that the bot will watch the `accept` command for.
 * `/content/airlock_release_role`: The string name of the guild role (which must be below the bot's role) that will be assigned to the user when calling the `accept` command.
+* `/content/cookie_hunt_hour_variance`: A two-item list of integers, with the first item being the minimum amount of hours to wait before dropping a cookie for the cookie hunt, and the second item being the maximum amount of hours to wait before dropping a cookie. 
+* `/content/cookie_hunt_allowed_channels`: A list of all the text channel names that the bot can randomly select to drop a cookie into for the cookie hunt.  

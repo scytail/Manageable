@@ -293,3 +293,40 @@ def add_cookie(user_id: int, **kwargs) -> int:
     session.flush()
 
     return cookie_count
+
+
+@DatabaseMethod
+def get_cookie_count_by_discord_id(discord_id: int, **kwargs) -> int:
+    """Retrieves the cookie count for the specified discord ID
+
+    Parameters
+    ----------
+    discord_id:     int     The discord ID to find the cookie count for.
+    kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
+
+    Returns
+    -------
+    int     The number of cookies collected by the user with the specified discord ID.
+    """
+
+    session = _get_session(kwargs)
+
+    cookie_row = session.query(CookieTable). \
+        select_from(UserTable). \
+        join(UserTable.Cookie). \
+        filter(UserTable.Discord_Id == discord_id).first()
+
+    if cookie_row is None:
+        # Couldn't find a row, so they have no cookies
+        return 0
+    else:
+        return cookie_row.Cookie_Count
+
+
+@DatabaseMethod
+def get_top_cookie_collectors(**kwargs) -> Query:
+    """Gets the top cookie collectors' discord IDs and how many cookies they've collected."""
+    session = _get_session(kwargs)
+
+    # SELECT TOP (3) UserTable.Discord_Id, CookieTable.Cookie_Count FROM UserTable JOIN CookieTable
+    # ON UserTable.User_Id = CookieTable.User_Id ORDER BY  CookieTable.Cookie_Count

@@ -6,6 +6,7 @@ from typing import Optional
 from discord.ext import commands, tasks
 from discord import Embed, Message, TextChannel
 from Code.Cogs.Base import ConfiguredCog
+from SystemInteractionCogs import RoleRequestCog
 from Code.Data import DataAccess
 
 
@@ -340,14 +341,30 @@ class CookieHuntCog(ConfiguredCog):
         # Give them a cookie point
         cookie_count = DataAccess.add_cookie(db_user_id)
 
-        # Figure out proper grammar
-        if cookie_count == 1:
-            cookie_word = 'cookie'
-        else:
-            cookie_word = 'cookies'
+        cookie_goal = ConfiguredCog.config['content']['cookie_hunt_goal']
+        winner_role_name = ConfiguredCog.config['content']['cookie_hunt_winner_role']
 
-        # Send a message saying they got the cookie
-        await ctx.send(f'{ctx.author.name} got the cookie! They have gotten {cookie_count} {cookie_word}!')
+        # check if goal was reached by the claimer
+        if cookie_count >= cookie_goal:
+            # announce winner
+            await ctx.send(f'Oh my, it looks like {ctx.author.nick} is the cookie monster!')
+
+            # give role
+            role = RoleRequestCog.find_role_in_guild(winner_role_name, ctx.guild)
+            if role:
+                if not RoleRequestCog.member_contains_role(role.name, ctx.author):
+                    await ctx.author.add_roles(role, reason=f'First to grab {cookie_goal} cookies.')
+
+            # TODO: reset counts
+        else:
+            # Figure out proper grammar
+            if cookie_count == 1:
+                cookie_word = 'cookie'
+            else:
+                cookie_word = 'cookies'
+
+            # Send a message saying they got the cookie
+            await ctx.send(f'{ctx.author.name} got the cookie! They have gotten {cookie_count} {cookie_word}!')
 
     @commands.command()
     async def sugar(self, ctx: commands.Context, options: str = None):
@@ -363,14 +380,25 @@ class CookieHuntCog(ConfiguredCog):
         # TODO: Implement command
         if options is not None:
             if options.lower() == CookieHuntSugarOptions.HIGH:
-                # Give the high scores
+                # Get the high scores
+
+                # convert IDs to nicknames
                 await ctx.send('TODO')
             else:
                 # Unknown option error
                 await ctx.send(f'Unknown command `{options}`, please re-enter your command and try again.')
         else:
+            # Find cookie count for the user
+            cookie_count = DataAccess.get_cookie_count_by_discord_id(ctx.author.id)
+
+            # Figure out proper grammar
+            if cookie_count == 1:
+                cookie_word = 'cookie'
+            else:
+                cookie_word = 'cookies'
+
             # Give the requesting user's score
-            await ctx.send('TODO')
+            await ctx.send(f'You have {cookie_count} {cookie_word}.')
 
     @tasks.loop(hours=1)
     async def _check_to_send_cookie(self):

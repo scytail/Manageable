@@ -384,4 +384,3 @@ class AutoDrawingPrompt(ConfiguredCog):
 
                     # Note down that we found today's prompt (so as not to re-send it)
                     self.current_prompt = drawing_prompt
-

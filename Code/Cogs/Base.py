@@ -114,8 +114,10 @@ class ConfiguredCog(commands.Cog):
 
     Methods
     -------
-    __init__        Sets up the Cog for general usage.
-    convert_color   A static class method for use processing stringified hex codes into integers.
+    __init__                Sets up the Cog for general usage.
+    convert_color           A static class method for use processing stringified hex codes into integers.
+    find_role_in_guild      Searches for the name of a role in the bot's guild.
+    member_contains_role    Checks to see if a given member has a certain role or not.
     """
 
     config: dict = load_config(CONFIG_FILE)

@@ -15,15 +15,15 @@ Currently, Manageable has these commands:
 | `role <add;remove;list> <optional: role_name>`    | Performs the specified action with the role (when provided) to the calling user. Actions can be `add` to add a specified role to yourself, `remove` to remove the specified role from yourself, and `list` to list all the available roles that can be added/removed with the command.       |
 | `accept`                                          | When called from a config-set channel, assigns a config-set role to the requesting user and deletes their message from the chat.                                                                                                                                                             |
 | `gimme`                                           | When the cookie hunt game is enabled and a cookie is dropped, claims the cookie and adds a point to the user.                                                                                                                                                                                |
-| `sugar <optional: high>`                          | Lists the number of cookies that the asking user has, if the option `high` is appended, lists the high scores of cookie collectors.                                                                                                                                                          |
+| `sugar <optional: high>`                          | Lists the number of cookies that the asking user has. If the option `high` is appended, lists the high scores of cookie collectors.                                                                                                                                                          |
 
 Additionally, Manageable also has these additional features:
 
-| Feature           | Description                                                                                                                             |
-| :---------------: | :-------------------------------------------------------------------------------------------------------------------------------------: | 
-| Daily Prompts     | Pulls the daily prompt from [r/SketchDaily](https://reddit.com/r/sketchdaily) and announces it in a specified channel.                  |
-| Feature Disabling | Any feature or command can be selectively disabled in the config if the functionality is not needed.                                    |
-| Cookie Hunt       | Randomly drops a cookie in a randomly selected channel for claiming with the `gimme` command. Play for high scores and bragging rights! |
+| Feature           | Description                                                                                                                                         |
+| :---------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------: | 
+| Daily Prompts     | Pulls the daily prompt from [r/SketchDaily](https://reddit.com/r/sketchdaily) and announces it in a specified channel.                              |
+| Feature Disabling | Any feature or command can be selectively disabled in the config if the functionality is not needed.                                                |
+| Cookie Hunt       | Drops a cookie in a randomly selected channel for claiming with the `gimme` command at a random interval. Play for high scores and bragging rights! |
 
 ## Setup
 
@@ -49,7 +49,7 @@ Manageable will need these permissions to run. Omitting any of these permissions
 | Embed Links     | The bot needs to be able to embed links to display some commands correctly.     |
 | Add Reactions   | The bot uses reactions to control pagination of its help command.               |
 
-**PLEASE NOTE**: On top of these permissions, the `warn` command _requires_ the `Server Members` privileged intent, so that it can view the full list of members to apply warnings to them as needed. Please make sure this Privileged Intent is enabled on the Discord Developer Dashboard.
+**PLEASE NOTE**: On top of these permissions, the `warn` command and the `sugar` command _require_ the `Server Members` privileged intent, so that it can view the full list of members to apply warnings to them as needed. Please make sure this Privileged Intent is enabled on the Discord Developer Dashboard.
 
 ##### 4) Configure the Bot Functionality
 Open `config.json`, located in the `Config` folder. Paste in the bot's token you received from discord in the `token` line, and configure any other information desired. Documentation for the configuration file is found in a later section.
@@ -77,3 +77,5 @@ This is the main json configuration file for Manageable, and contains all the ba
 * `/content/airlock_release_role`: The string name of the guild role (which must be below the bot's role) that will be assigned to the user when calling the `accept` command.
 * `/content/cookie_hunt_hour_variance`: A two-item list of integers, with the first item being the minimum amount of hours to wait before dropping a cookie for the cookie hunt, and the second item being the maximum amount of hours to wait before dropping a cookie. 
 * `/content/cookie_hunt_allowed_channels`: A list of all the text channel names that the bot can randomly select to drop a cookie into for the cookie hunt.  
+* `/content/cookie_hunt_goal`: A positive integer goal for the certain number of cookies any user needs to collect to wih the game and reset the points for everyone.
+* `/content/cookie_hunt_winner_role`: The string name of the guild role (which must be below the bot's role) that will be assigned to the winner of the cookie hunt game. **Please note** that when a new winner is assigned, all other guild users with this role will lose it.

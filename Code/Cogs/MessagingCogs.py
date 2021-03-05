@@ -6,7 +6,6 @@ from typing import Optional
 from discord.ext import commands, tasks
 from discord import Embed, Message, TextChannel
 from Code.Cogs.Base import ConfiguredCog
-from SystemInteractionCogs import RoleRequestCog
 from Code.Data import DataAccess
 
 
@@ -319,7 +318,8 @@ class CookieHuntCog(ConfiguredCog):
 
     @commands.command()
     async def gimme(self, ctx: commands.Context):
-        """The origin point for the `gimme` command. Claims a cookie for the calling user if one has been dropped.
+        """The origin point for the `gimme` command. Claims a cookie for the calling user if one has been dropped,
+           and resets the points for all if the goal was reached.
 
         Parameters
         ----------
@@ -347,15 +347,21 @@ class CookieHuntCog(ConfiguredCog):
         # check if goal was reached by the claimer
         if cookie_count >= cookie_goal:
             # announce winner
-            await ctx.send(f'Oh my, it looks like {ctx.author.nick} is the cookie monster!')
+            await ctx.send(f'Oh my, it looks like {ctx.author.name} is the cookie monster!')
 
-            # give role
-            role = RoleRequestCog.find_role_in_guild(winner_role_name, ctx.guild)
+            # Award the role
+            role = self.find_role_in_guild(winner_role_name, ctx.guild)
             if role:
-                if not RoleRequestCog.member_contains_role(role.name, ctx.author):
+                # Remove role from all users
+                for member in ctx.guild.members:
+                    if role in member.roles:
+                        await member.remove_roles(role, reason='No longer the cookie hunt winner.')
+                # Give the role to the winner
+                if not self.member_contains_role(role.name, ctx.author):
                     await ctx.author.add_roles(role, reason=f'First to grab {cookie_goal} cookies.')
 
-            # TODO: reset counts
+            # reset cookie counts
+            DataAccess.reset_all_cookies()
         else:
             # Figure out proper grammar
             if cookie_count == 1:
@@ -377,13 +383,29 @@ class CookieHuntCog(ConfiguredCog):
                                         as enumerated by the `CookieHuntSugarOptions` enumeration.
         """
 
-        # TODO: Implement command
         if options is not None:
-            if options.lower() == CookieHuntSugarOptions.HIGH:
+            if options.lower() == CookieHuntSugarOptions.HIGH.value:
                 # Get the high scores
+                top_collectors = DataAccess.get_top_cookie_collectors()
 
-                # convert IDs to nicknames
-                await ctx.send('TODO')
+                await ctx.send('**__Top Cookie Collectors__**')
+
+                # convert IDs to nicknames and display them
+                collectors_displayed = False
+                for Discord_Id, Cookie_Count in top_collectors:
+                    collectors_displayed = True
+
+                    discord_user = self.bot.get_user(int(Discord_Id))
+                    if discord_user:
+                        user_name = discord_user.name
+                    else:
+                        user_name = 'Unknown'
+
+                    await ctx.send(f'{user_name}: {Cookie_Count}')
+
+                if not collectors_displayed:
+                    # our query returned no results
+                    await ctx.send('_No one has gotten any cookies yet!_')
             else:
                 # Unknown option error
                 await ctx.send(f'Unknown command `{options}`, please re-enter your command and try again.')
@@ -403,8 +425,8 @@ class CookieHuntCog(ConfiguredCog):
     @tasks.loop(hours=1)
     async def _check_to_send_cookie(self):
         """A looping task to check if a cookie needs to be sent. Checks a few parameters such as a randomized time
-        delay and whether or not there's already an available cookie to claim. If all the parameters have been met,
-        picks a random channel from a configured list and drops a cookie into that channel for claiming.
+           delay and whether or not there's already an available cookie to claim. If all the parameters have been met,
+           picks a random channel from a configured list and drops a cookie into that channel for claiming.
         """
         # If random number is None, pick random number between 24 and 48
         if self.cookie_drop_delay_hours is None or self.cookie_drop_delay_hours == 0:
@@ -420,7 +442,7 @@ class CookieHuntCog(ConfiguredCog):
             prefix = ConfiguredCog.config['command_prefix']
             color = ConfiguredCog.convert_color('#8a4b38')
             cookie_drop_embed = Embed(color=color, title=':cookie:', description=f'Here, have a cookie! Use '
-                                                                                 f'{prefix}gimme to pick it up!')
+                                                                                 f'`{prefix}gimme` to take it!')
 
             # Pick a random channel to send it to
             channel = self._pick_random_channel_to_send()
@@ -457,7 +479,7 @@ class CookieHuntCog(ConfiguredCog):
 
     def _pick_random_channel_to_send(self) -> Optional[TextChannel]:
         """Takes the preconfigured list of available channels that we can drop a cookie into, and returns a possible
-        one.
+           one.
 
         Returns
         -------

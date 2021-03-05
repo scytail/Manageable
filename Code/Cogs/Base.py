@@ -1,5 +1,6 @@
 import json
 import logging
+from discord import Role, Guild, Member
 from discord.ext import commands
 from typing import Optional
 
@@ -164,3 +165,50 @@ class ConfiguredCog(commands.Cog):
                         in the provided config, returns None.
         """
         return is_cog_enabled(cog_name, self.config)
+
+    @staticmethod
+    def find_role_in_guild(role_name_query: str, guild: Guild) -> Optional[Role]:
+        """Finds a role with the provided name in a guild.
+
+        Notes
+        -----
+        Please note that this will find the first (lowest) role with the provided name. Be careful if the guild has
+        multiple roles with the same role name. Also keep in mind that the role search IS case sensitive.
+
+        Parameters
+        ----------
+        role_name_query:    str             The name of the role to search the guild for
+        guild:              discord.Guild   The guild to validate the role name against
+
+        Returns
+        -------
+        Optional[Role]  Returns the role in the class, or None if no role exists in the guild
+        """
+        for role in guild.roles:
+            if role.name == role_name_query:
+                # found the role with the provided name
+                return role
+
+        # didn't find the role
+        return None
+
+    @staticmethod
+    def member_contains_role(role_name_query: str, member: Member) -> bool:
+        """Validates that the provided member has a role with the given name.
+
+        Parameters
+        ----------
+        role_name_query:    str             The name of the role to search the guild for
+        member:             discord.Member  The guild to validate the role name against
+
+        Returns
+        -------
+        bool    Returns True if the member contains the role, or False otherwise
+        """
+        for role in member.roles:
+            if role.name == role_name_query:
+                # found the role with the provided name
+                return True
+
+        # didn't find the role
+        return False

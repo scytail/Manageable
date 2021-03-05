@@ -325,8 +325,37 @@ def get_cookie_count_by_discord_id(discord_id: int, **kwargs) -> int:
 
 @DatabaseMethod
 def get_top_cookie_collectors(**kwargs) -> Query:
-    """Gets the top cookie collectors' discord IDs and how many cookies they've collected."""
+    """Gets the top three cookie collectors' discord IDs and how many cookies they've collected.
+
+    Parameters
+    ----------
+    kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
+
+    Returns
+    -------
+    Query   The top three collectors, with their Discord_Id and Cookie_Count data.
+    """
     session = _get_session(kwargs)
 
-    # SELECT TOP (3) UserTable.Discord_Id, CookieTable.Cookie_Count FROM UserTable JOIN CookieTable
-    # ON UserTable.User_Id = CookieTable.User_Id ORDER BY  CookieTable.Cookie_Count
+    top_collectors = session.query(UserTable.Discord_Id, CookieTable.Cookie_Count). \
+        select_from(CookieTable). \
+        join(UserTable.Cookie). \
+        filter(CookieTable.Cookie_Count > 0). \
+        order_by(CookieTable.Cookie_Count.desc()). \
+        limit(3)
+
+    return top_collectors
+
+
+@DatabaseMethod
+def reset_all_cookies(**kwargs):
+    """Resets all cookie points to their zero states."""
+    session = _get_session(kwargs)
+
+    cookie_rows = session.query(CookieTable).all()
+
+    for cookie_row in cookie_rows:
+        if cookie_row is not None:
+            cookie_row.Cookie_Count = 0
+
+    session.flush()

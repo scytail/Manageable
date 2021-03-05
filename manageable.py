@@ -5,16 +5,16 @@ from Code.Cogs.ModToolsCogs import UserWarnCog, AutoDrawingPrompt
 from Code.Cogs.MessagingCogs import HelpCog, TagCog, CookieHuntCog
 from Code.Cogs.SystemInteractionCogs import UserInteractionCog, RoleRequestCog, AirlockCog
 
-
 if __name__ == '__main__':
     # Build the bot
     Base.ConfiguredCog.logger.info('Constructing Manageable bot...')
     Base.ConfiguredCog.logger.debug(f'Building bot.')
 
     intents = Intents.default()
-    # We need the member intent for the warn command
-    require_member_intent = Base.is_cog_enabled('warn', Base.ConfiguredCog.config)
-    Base.ConfiguredCog.logger.debug(f'UserWarn Cog check resulted in: {require_member_intent} (for privileged intent).')
+    # We need the member intent for certain commands
+    require_member_intent = Base.is_cog_enabled('warn', Base.ConfiguredCog.config) or \
+        Base.is_cog_enabled('cookieHunt', Base.ConfiguredCog.config)
+    Base.ConfiguredCog.logger.debug(f'Cog check resulted in: {require_member_intent} (for privileged intent).')
     if require_member_intent:
         intents.members = True
 

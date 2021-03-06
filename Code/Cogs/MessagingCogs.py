@@ -182,32 +182,30 @@ class HelpCog(ConfiguredCog):
         embed = None
         embed_list: list = []
 
-        for command_key in help_dict['command_list']:
-            command_summary = help_dict['command_list'][command_key]
+        enabled_commands = self._get_enabled_commands(help_dict)
 
-            if self.is_cog_enabled(command_key) or \
-               self.is_cog_enabled(command_key) is None:
-                # Check if first command on the page
-                if command_index % commands_per_embed == 0:
-                    embed = Embed(title=help_dict['title'],
-                                  description=help_dict['description'].format(
-                                      prefix=ConfiguredCog.config['command_prefix']),
-                                  color=help_dict['color'])
+        # Build the paginated embeds for display, using the dictionary we just compiled
+        for command_string in enabled_commands:
+            # Check if first command on the page; build a new embed if so
+            if command_index % commands_per_embed == 0:
+                embed = Embed(title=help_dict['title'],
+                              description=help_dict['description'].format(
+                                  prefix=ConfiguredCog.config['command_prefix']),
+                              color=help_dict['color'])
 
-                # Add fields
-                embed.add_field(name=command_summary['command'], value=command_summary['description'], inline=False)
+            # Add field
+            embed.add_field(name=command_string, value=enabled_commands[command_string]['description'], inline=False)
 
-                # Save the embed as a page if we've finished the page
-                if (command_index + 1) % commands_per_embed == 0:
-                    # Add the embed to the list and clear the current embed (to prevent double-adding the embed)
-                    embed_list.append(embed)
-                    embed = None
+            # Save the embed as a page if we've finished the page
+            if (command_index + 1) % commands_per_embed == 0:
+                # Add the embed to the list and clear the current embed (to prevent double-adding the embed)
+                embed_list.append(embed)
+                embed = None
 
-                command_index += 1
+            command_index += 1
 
         # Save the last embed as a page if it hasn't already been saved yet
         if embed is not None:
-            # Add the embed to the list and clear the current embed (to prevent double-adding the embed)
             embed_list.append(embed)
 
         # Build the footer, now that we have a fully compiled list of all the ENABLED commands
@@ -219,13 +217,13 @@ class HelpCog(ConfiguredCog):
 
         return embed_list
 
-    def _build_help_detail(self, help_dict: dict, command_id: str) -> list:
+    def _build_help_detail(self, help_dict: dict, command_name: str) -> list:
         """Builds the embed data for the command detail.
 
         Parameters
         ----------
         help_dict:  dict    The data dictionary that has the help information.
-        command_id: str     The command keyword to search the help dictionary for.
+        command_name: str     The command keyword to search the help dictionary for.
 
         Returns
         -------
@@ -234,27 +232,68 @@ class HelpCog(ConfiguredCog):
         """
 
         embed_list: list = []
-        if command_id not in help_dict['command_list'] or \
-           not (self.is_cog_enabled(command_id) or
-                self.is_cog_enabled(command_id) is None):
+
+        enabled_commands = self._get_enabled_commands(help_dict)
+
+        # Error catching for invalid commands
+        full_command_name = None
+        for command in enabled_commands:
+            # note that the "key" is the `command` part of the helptext, which could have parameters described in it
+            # like so: `"warn <action> <user>`", so we only need to validate against the first word of the command
+            # for the user's query. If we succeed, jot down the full key so we can use that from now on.
+            if command_name == command.split()[0]:
+                full_command_name = command
+                break
+
+        if not full_command_name:
             # Command not found, return an error embed to the user
-            embed = Embed(title=command_id, description='Command not found', color=help_dict['color'])
+            embed = Embed(title=command_name, description='Command not found', color=help_dict['color'])
+            embed.set_footer(text='Page 1/1')
             embed_list.append(embed)
             return embed_list
 
-        # Build the basic description of the  command
-        command_data = help_dict['command_list'][command_id]
-        embed = Embed(title=command_data['command'], description=command_data['description'], color=help_dict['color'])
+        # Build the basic description of the command
+        command_data = enabled_commands[full_command_name]
+        embed = Embed(title=full_command_name, description=command_data['description'], color=help_dict['color'])
         # Build out detail fields if needed
-        if 'details' in command_data:
-            for detail in command_data['details']:
-                embed.add_field(name=detail['parameter'], value=detail['description'], inline=False)
+        for detail in command_data['details']:
+            embed.add_field(name=detail['parameter'], value=detail['description'], inline=False)
 
-        # TODO: Paginate the details
+        # details are not paginated as of yet, so just "pretend" for consistency
         embed.set_footer(text='Page 1/1')
         embed_list.append(embed)
 
         return embed_list
+
+    def _get_enabled_commands(self, help_dict: dict) -> dict:
+        """Compile a dictionary of all the valid commands from all the enabled cogs, where the key is the command,
+           and the value is the description.
+
+        Parameters
+        ----------
+        help_dict:  dict    The data dictionary that has the help information.
+
+        Returns
+        -------
+        dict    a dictionary where the key is the command and the value is a dict with a 'description' and 'details'
+        """
+        enabled_commands: dict = {}
+
+        for cog_name in help_dict['cogs']:
+            if self.is_cog_enabled(cog_name) or \
+                    self.is_cog_enabled(cog_name) is None:
+                cog_commands = help_dict['cogs'][cog_name]
+
+                for cog_command_dict in cog_commands:
+                    # Build command information
+                    command_data = {'description': cog_command_dict['description'], 'details': []}
+                    if 'details' in cog_command_dict:
+                        command_data['details'] = cog_command_dict['details']
+
+                    # Add the command and its details to the enabled commands dict
+                    enabled_commands[cog_command_dict['command']] = command_data
+
+        return enabled_commands
 
     def _get_check_method(self, message: Message, allow_decrease: bool, allow_increase: bool) -> callable([..., bool]):
         """Builds and returns a method that can be plugged into a bot's check functionality.
@@ -420,7 +459,7 @@ class CookieHuntCog(ConfiguredCog):
                 cookie_word = 'cookies'
 
             # Give the requesting user's score
-            await ctx.send(f'You have {cookie_count} {cookie_word}.')
+            await ctx.send(f'{ctx.author.name} has {cookie_count} {cookie_word}.')
 
     @tasks.loop(hours=1)
     async def _check_to_send_cookie(self):

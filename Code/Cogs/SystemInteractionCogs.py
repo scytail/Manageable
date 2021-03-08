@@ -1,8 +1,7 @@
 from enum import Enum
 import traceback
 from discord.ext import commands
-from discord import Role, Guild, Member, Message
-from typing import Optional
+from discord import Role, Message
 from Code.Cogs.Base import ConfiguredCog
 
 
@@ -60,8 +59,6 @@ class RoleRequestCog(ConfiguredCog):
     Methods
     -------
     role                    The origin point for the `role` command.
-    find_role_in_guild      Searches for the name of a role in the bot's guild.
-    member_contains_role    Checks to see if a given member has a certain role or not.
     """
 
     @commands.command()
@@ -130,32 +127,6 @@ class RoleRequestCog(ConfiguredCog):
 
         await ctx.send(message)
 
-    @staticmethod
-    def find_role_in_guild(role_name_query: str, guild: Guild) -> Optional[Role]:
-        """Finds a role with the provided name in a guild.
-
-        Notes
-        -----
-        Please note that this will find the first (lowest) role with the provided name. Be careful if the guild has
-        multiple roles with the same role name. Also keep in mind that the role search IS case sensitive.
-
-        Parameters
-        ----------
-        role_name_query:    str             The name of the role to search the guild for
-        guild:              discord.Guild   The guild to validate the role name against
-
-        Returns
-        -------
-        Optional[Role]  Returns the role in the class, or None if no role exists in the guild
-        """
-        for role in guild.roles:
-            if role.name == role_name_query:
-                # found the role with the provided name
-                return role
-
-        # didn't find the role
-        return None
-
     def _validate_role_against_whitelist(self, role: Role) -> bool:
         """Validates that the given role is in the config whitelist for allowed role interactions
 
@@ -171,27 +142,6 @@ class RoleRequestCog(ConfiguredCog):
         if role.name not in self.config["content"]["role_whitelist"]:
             return False
         return True
-
-    @staticmethod
-    def member_contains_role(role_name_query: str, member: Member) -> bool:
-        """Validates that the provided member has a role with the given name.
-
-        Parameters
-        ----------
-        role_name_query:    str             The name of the role to search the guild for
-        member:             discord.Member  The guild to validate the role name against
-
-        Returns
-        -------
-        bool    Returns True if the member contains the role, or False otherwise
-        """
-        for role in member.roles:
-            if role.name == role_name_query:
-                # found the role with the provided name
-                return True
-
-        # didn't find the role
-        return False
 
 
 class AirlockCog(ConfiguredCog):
@@ -221,13 +171,13 @@ class AirlockCog(ConfiguredCog):
 
         # Give the message sender a predefined role
         role_name = ConfiguredCog.config['content']['airlock_release_role']
-        role = RoleRequestCog.find_role_in_guild(role_name, ctx.guild)
+        role = self.find_role_in_guild(role_name, ctx.guild)
         if not role:
             self.logger.error(f"Encountered an issue attempting to resolve the airlock role specified in the config.")
             await ctx.send(f"There was an issue finding the role to give to the sender.")
             return
 
-        if RoleRequestCog.member_contains_role(role.name, ctx.author):
+        if self.member_contains_role(role.name, ctx.author):
             self.logger.warning(f'{ctx.author.name} requested an airlock release when they already had the role.')
             await ctx.send('You already have the airlock release role.')
             return

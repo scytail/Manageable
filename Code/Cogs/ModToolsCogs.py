@@ -1,7 +1,7 @@
 import urllib.request
 from enum import Enum
 from datetime import datetime, timedelta
-from discord import Member, Embed
+from discord import Member, Embed, TextChannel
 from discord.ext import commands, tasks
 from Code.Cogs.Base import ConfiguredCog
 from Code.Data import DataAccess
@@ -264,6 +264,7 @@ class AutoDrawingPrompt(ConfiguredCog):
         -------
         __init__    Overridden method from base class to set up and start the automated task
         cog_unload  Overridden method from commands.Cog to stop the task
+        on_ready    A listener method to execute the sketch prompt as soon as the cog is loaded and ready.
         """
 
     def __init__(self, bot: commands.Bot):
@@ -282,6 +283,8 @@ class AutoDrawingPrompt(ConfiguredCog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        """Cog Listener to automatically run the task on start."""
+
         # Run the task so that we aren't waiting for the task
         await self._get_sketch_prompt()
 
@@ -367,7 +370,8 @@ class AutoDrawingPrompt(ConfiguredCog):
         elif not drawing_prompt == self.current_prompt:
             # The prompt we pulled does not match what we found before, so post the new text.
             for channel in self.bot.get_all_channels():
-                if channel.name == ConfiguredCog.config['content']['daily_prompt_channel']:
+                if channel.name == ConfiguredCog.config['content']['daily_prompt_channel'] \
+                        and isinstance(channel, TextChannel):
                     # Build the prompt message
                     color = ConfiguredCog.convert_color(ConfiguredCog.config['content']['prompt_color'])
                     title = 'Prompt for today, courtesy of r/SketchDaily'
@@ -380,4 +384,3 @@ class AutoDrawingPrompt(ConfiguredCog):
 
                     # Note down that we found today's prompt (so as not to re-send it)
                     self.current_prompt = drawing_prompt
-

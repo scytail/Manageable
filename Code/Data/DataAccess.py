@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.orm.query import Query
-from Code.Data.DataModel import engine, UserTable, WarningTable
+from Code.Data.DataModel import engine, UserTable, WarningTable, CookieTable
 from Code.Base.Decorator import Decorator
 
 SessionObject = sessionmaker(bind=engine)
@@ -110,11 +110,11 @@ def _get_session(kwargs: dict) -> Session:
 @DatabaseMethod
 def find_user_id_by_discord_id(discord_id: int, **kwargs) -> int:
     """Finds the database's user id in the database by the unique discord id. If it can't be found, it will add a new
-    row to the database
+    row to the database.
 
     Parameters
     ----------
-    discord_id: int     The discord id to search for
+    discord_id: int     The discord id to search for.
     kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
 
     Returns
@@ -193,7 +193,7 @@ def lookup_warning_by_warning_id(warning_id: int, **kwargs) -> Query:
 
 @DatabaseMethod
 def add_warning(user_id: int, **kwargs) -> int:
-    """
+    """Adds a warning to the provided database user ID
 
     Parameters
     ----------
@@ -257,3 +257,105 @@ def delete_warning(warning_id: int, **kwargs):
 
     if warning_to_remove is not None:
         session.delete(warning_to_remove)
+
+
+@DatabaseMethod
+def add_cookie(user_id: int, **kwargs) -> int:
+    """Adds a cookie to the provided database user ID.
+
+    Parameters
+    ----------
+    user_id:    int     The user table primary key related to the discord member that should receive the cookie point.
+    kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
+
+    Returns
+    -------
+    int     The total number of cookies added to the user after the most recent addition.
+    """
+
+    session = _get_session(kwargs)
+
+    cookie_count = 1
+
+    cookie_row = session.query(CookieTable).filter(CookieTable.User_Id == user_id).first()
+
+    if cookie_row is None:
+        # Create cookie row
+
+        cookie_row = CookieTable(User_Id=user_id, Cookie_Count=cookie_count)
+        session.add(cookie_row)
+    else:
+        # Add one to cookie row
+        # (Note that according to some stack overflow discussion "+=" can create race conditions)
+        cookie_row.Cookie_Count = cookie_row.Cookie_Count + 1
+        cookie_count = cookie_row.Cookie_Count
+
+    session.flush()
+
+    return cookie_count
+
+
+@DatabaseMethod
+def get_cookie_count_by_discord_id(discord_id: int, **kwargs) -> int:
+    """Retrieves the cookie count for the specified discord ID
+
+    Parameters
+    ----------
+    discord_id:     int     The discord ID to find the cookie count for.
+    kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
+
+    Returns
+    -------
+    int     The number of cookies collected by the user with the specified discord ID.
+    """
+
+    session = _get_session(kwargs)
+
+    cookie_row = session.query(CookieTable). \
+        select_from(UserTable). \
+        join(UserTable.Cookie). \
+        filter(UserTable.Discord_Id == discord_id).first()
+
+    if cookie_row is None:
+        # Couldn't find a row, so they have no cookies
+        return 0
+    else:
+        return cookie_row.Cookie_Count
+
+
+@DatabaseMethod
+def get_top_cookie_collectors(**kwargs) -> Query:
+    """Gets the top three cookie collectors' discord IDs and how many cookies they've collected.
+
+    Parameters
+    ----------
+    kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
+
+    Returns
+    -------
+    Query   The top three collectors, with their Discord_Id and Cookie_Count data.
+    """
+    session = _get_session(kwargs)
+
+    top_collectors = session.query(UserTable.Discord_Id, CookieTable.Cookie_Count). \
+        select_from(CookieTable). \
+        join(UserTable.Cookie). \
+        filter(CookieTable.Cookie_Count > 0). \
+        order_by(CookieTable.Cookie_Count.desc()). \
+        limit(3)
+
+    return top_collectors
+
+
+@DatabaseMethod
+def reset_all_cookies(**kwargs):
+    """Resets all cookie points to their zero states."""
+    session = _get_session(kwargs)
+
+    cookie_rows = session.query(CookieTable).all()
+
+    for cookie_row in cookie_rows:
+        if cookie_row is not None:
+            cookie_row.Cookie_Count = 0
+
+    session.flush()

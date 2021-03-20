@@ -13,7 +13,8 @@
       "role": true,
       "airlock": false,
       "autoDrawingPrompt": false,
-      "cookieHunt": false
+      "cookieHunt": false,
+      "diceRoller": true
     },
     "tags": {
       "about": {

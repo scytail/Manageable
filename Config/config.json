@@ -13,7 +13,8 @@
       "role": true,
       "airlock": false,
       "autoDrawingPrompt": false,
-      "cookieHunt": false
+      "cookieHunt": false,
+      "diceRoller": true
     },
     "tags": {
       "about": {
@@ -31,6 +32,7 @@
     "cookie_hunt_hour_variance": [24, 48],
     "cookie_hunt_allowed_channels": ["chat"],
     "cookie_hunt_goal": 20,
-    "cookie_hunt_winner_role": "Cookie Monster"
+    "cookie_hunt_winner_role": "Cookie Monster",
+    "dice_result_embed_color": "#32a852"
   }
 }

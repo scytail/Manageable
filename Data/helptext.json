@@ -80,6 +80,42 @@
           }
         ]
       }
+    ],
+    "diceRoller" : [
+      {
+        "command": "roll <dice>",
+        "description": "Calculates a role with the specified dice syntax.",
+        "details": [
+          {
+            "parameter": "`xdy`",
+            "description": "Rolls a `y`-sided die `x` times, returning an integer."
+          },
+          {
+            "parameter": "`x+y`",
+            "description": "Adds `y` to `x`."
+          },
+          {
+            "parameter": "`x-y`",
+            "description": "Subtracts `y` from `x`."
+          },
+          {
+            "parameter": "`x*y`",
+            "description": "Multiplies `x` by `y`."
+          },
+          {
+            "parameter": "`x/y`",
+            "description": "Divides `x` by `y`."
+          },
+          {
+            "parameter": "`(x)`",
+            "description": "Prioritizes the calculation `x` within the parentheses."
+          }
+        ]
+      },
+      {
+        "command": "r <dice>",
+        "description": "An alias for the `roll` command. Please do `help roll` for more details."
+      }
     ]
   }
 }

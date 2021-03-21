@@ -4,7 +4,7 @@ A friendly, easy-to-use discord management bot.
 
 Created by Ben Schwabe, originally for a worldbuilding Discord server. Feature backlog can be found [here](https://trello.com/b/RgsfkGX1/manageable)
 
-# Command List
+## Command List
 Currently, Manageable has these commands:
 
 | Command                                           | Description                                                                                                                                                                                                                                                                                  |
@@ -16,6 +16,8 @@ Currently, Manageable has these commands:
 | `accept`                                          | When called from a config-set channel, assigns a config-set role to the requesting user and deletes their message from the chat.                                                                                                                                                             |
 | `gimme`                                           | When the cookie hunt game is enabled and a cookie is dropped, claims the cookie and adds a point to the user.                                                                                                                                                                                |
 | `sugar <optional: high>`                          | Lists the number of cookies that the asking user has. If the option `high` is appended, lists the high scores of cookie collectors.                                                                                                                                                          |
+| `roll <dice>`                                     | Calculates a role with the specified dice syntax. Exact syntax will be documented below.                                                                                                                                                                                                     |
+| `r <dice>`                                        | An alias for the `roll` command.                                                                                                                                                                                                                                                             |
 
 Additionally, Manageable also has these additional features:
 
@@ -49,7 +51,7 @@ Manageable will need these permissions to run. Omitting any of these permissions
 | Embed Links     | The bot needs to be able to embed links to display some commands correctly.     |
 | Add Reactions   | The bot uses reactions to control pagination of its help command.               |
 
-**PLEASE NOTE**: On top of these permissions, the `warn` command and the `sugar` command _require_ the `Server Members` privileged intent, so that it can view the full list of members to apply warnings to them as needed. Please make sure this Privileged Intent is enabled on the Discord Developer Dashboard.
+**PLEASE NOTE**: On top of these permissions,the `Server Members` privileged intent is required, so that Manageable can view the full list of members to work (such as monitoring reacts on the help message, assigning cookies, and applying warnings). Please make sure this Privileged Intent is enabled on the Discord Developer Dashboard.
 
 ##### 4) Configure the Bot Functionality
 Open `config.json`, located in the `Config` folder. Paste in the bot's token you received from discord in the `token` line, and configure any other information desired. Documentation for the configuration file is found in a later section.
@@ -57,7 +59,9 @@ Open `config.json`, located in the `Config` folder. Paste in the bot's token you
 ##### 5) Run the Bot
 In the root directory of Manageable, execute `manageable.py`. If everything is set up correctly, you should see the bot appear online in the server you've invited it to.
 
-## Config.json
+## Other Documentation
+
+### Config.json
 This is the main json configuration file for Manageable, and contains all the basic, configurable parameters to tweak Manageable's functionality. Below is a description of each parameter.
 
 * `/token`: A string token given by Discord after configuring your bot with their developer portal. Be sure not to share this token with anyone.
@@ -79,3 +83,26 @@ This is the main json configuration file for Manageable, and contains all the ba
 * `/content/cookie_hunt_allowed_channels`: A list of all the text channel names that the bot can randomly select to drop a cookie into for the cookie hunt.  
 * `/content/cookie_hunt_goal`: A positive integer goal for the certain number of cookies any user needs to collect to wih the game and reset the points for everyone.
 * `/content/cookie_hunt_winner_role`: The string name of the guild role (which must be below the bot's role) that will be assigned to the winner of the cookie hunt game. **Please note** that when a new winner is assigned, all other guild users with this role will lose it.
+* `/content/dice_result_embed_color`: A hexadecimal value in the format `#000000`, denoting the color of the dice result's embed.
+
+### Dice Roller Syntax
+
+The dice rolling feature tries to maintain a relatively expected and standard mathematical syntax. All steps, along with the result, will be outputted to discord. The following operations are supported:
+
+* `xdy`: Rolls a `y`-sided die `x` times, returning an integer.
+  * If `x` is negative, the roll will be evaluated like `-(xdy)`.
+  * If `y` is negative, the die will be simulated from `y` to `-1`.
+  * If `x` or `y` are not integers, they will be raised to the nearest integer (using a `ceiling` function, which will be denoted in the outputted steps)
+  * If `x` or `y` is `0`, the die roll will be 0.
+* `x+y`: Adds `y` to `x`.
+* `x-y`: Subtracts `y` from `x`.
+* `x*y`: Multiplies `x` by `y`.
+* `x/y`: Divides `x` by `y`.
+* `(x)`: Prioritizes the calculation `x` within the parentheses.
+
+The order of operations is as follows (any equivalent operations are done left-to-right):
+
+1. `d`
+2. `()`
+3. `*`,`/`
+4. `+`,`-`

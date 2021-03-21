@@ -7,6 +7,7 @@ from discord.ext import commands, tasks
 from discord import Embed, Message, TextChannel
 from Code.Cogs.Base import ConfiguredCog
 from Code.Data import DataAccess
+from Code.Base.Parsing import DiceLexer, DiceParser
 
 
 class CookieHuntSugarOptions(Enum):
@@ -538,3 +539,58 @@ class CookieHuntCog(ConfiguredCog):
 
         # No valid channel options, return None
         return None
+
+
+class DiceRollerCog(ConfiguredCog):
+    """A class supporting discord dice rolling features
+    Methods
+    -------
+    __init__    Overridden method from ConfiguredCog to set the dice lexer and parser.
+    roll        The origin point for the 'roll' command.
+    r           Alias for the 'roll' command.
+    """
+
+    @commands.command()
+    async def roll(self, ctx: commands.context, text: str):
+        """The origin point for the dice roll command.
+
+        Parameters
+        ----------
+        ctx:    discord.ext.commands.context    The command context.
+        text:   str                             The dice roll command to parse.
+        """
+        if text:
+            lexer = DiceLexer()
+            parser = DiceParser()
+
+            step_data, result = parser.parse(lexer.tokenize(text))
+
+            if result.is_integer():
+                result = int(result)
+
+            color = ConfiguredCog.convert_color(ConfiguredCog.config['content']['dice_result_embed_color'])
+            title = f'Roll for {ctx.author.name}'
+            description = f'**Result:**\n' \
+                          f'```\n' \
+                          f'{result}\n' \
+                          f'```\n' \
+                          f'**Steps:**\n' \
+                          f'```\n'
+            for step in step_data:
+                description += step + '\n'
+            description += '```'
+
+            embed = Embed(color=color, title=title, description=description)
+
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    async def r(self, ctx: commands.context, text: str):
+        """An alias for the `roll` method.
+
+        Parameters
+        ----------
+        ctx:    discord.ext.commands.context    The command context.
+        text:   str                             The dice roll command to parse.
+        """
+        return await self.roll(ctx, text)

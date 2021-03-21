@@ -51,7 +51,7 @@ Manageable will need these permissions to run. Omitting any of these permissions
 | Embed Links     | The bot needs to be able to embed links to display some commands correctly.     |
 | Add Reactions   | The bot uses reactions to control pagination of its help command.               |
 
-**PLEASE NOTE**: On top of these permissions, the `warn` command and the `sugar` command _require_ the `Server Members` privileged intent, so that it can view the full list of members to apply warnings to them as needed. Please make sure this Privileged Intent is enabled on the Discord Developer Dashboard.
+**PLEASE NOTE**: On top of these permissions,the `Server Members` privileged intent is required, so that Manageable can view the full list of members to work (such as monitoring reacts on the help message, assigning cookies, and applying warnings). Please make sure this Privileged Intent is enabled on the Discord Developer Dashboard.
 
 ##### 4) Configure the Bot Functionality
 Open `config.json`, located in the `Config` folder. Paste in the bot's token you received from discord in the `token` line, and configure any other information desired. Documentation for the configuration file is found in a later section.

@@ -11,12 +11,7 @@ if __name__ == '__main__':
     Base.ConfiguredCog.logger.debug(f'Building bot.')
 
     intents = Intents.default()
-    # We need the member intent for certain commands
-    require_member_intent = Base.is_cog_enabled('warn', Base.ConfiguredCog.config) or \
-        Base.is_cog_enabled('cookieHunt', Base.ConfiguredCog.config)
-    Base.ConfiguredCog.logger.debug(f'Cog check resulted in: {require_member_intent} (for privileged intent).')
-    if require_member_intent:
-        intents.members = True
+    intents.members = True  # Among others, the help command needs the members intent to monitor reactions
 
     discord_bot = Bot(Base.ConfiguredCog.config['command_prefix'], intents=intents)
 

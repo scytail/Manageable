@@ -550,12 +550,6 @@ class DiceRollerCog(ConfiguredCog):
     r           Alias for the 'roll' command.
     """
 
-    def __init__(self, bot: commands.Bot):
-        super().__init__(bot)
-
-        self._lexer = DiceLexer()
-        self._parser = DiceParser()
-
     @commands.command()
     async def roll(self, ctx: commands.context, text: str):
         """The origin point for the dice roll command.
@@ -566,7 +560,29 @@ class DiceRollerCog(ConfiguredCog):
         text:   str                             The dice roll command to parse.
         """
         if text:
-            await ctx.send(self._parser.parse(self._lexer.tokenize(text)))
+            lexer = DiceLexer()
+            parser = DiceParser()
+
+            step_data, result = parser.parse(lexer.tokenize(text))
+
+            if result.is_integer():
+                result = int(result)
+
+            color = ConfiguredCog.convert_color(ConfiguredCog.config['content']['dice_result_embed_color'])
+            title = f'Roll for {ctx.author.name}'
+            description = f'**Result:**\n' \
+                          f'```\n' \
+                          f'{result}\n' \
+                          f'```\n' \
+                          f'**Steps:**\n' \
+                          f'```\n'
+            for step in step_data:
+                description += step + '\n'
+            description += '```'
+
+            embed = Embed(color=color, title=title, description=description)
+
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def r(self, ctx: commands.context, text: str):

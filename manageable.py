@@ -3,7 +3,7 @@ from discord import Intents
 import Code.Cogs.Base as Base
 from Code.Cogs.ModToolsCogs import UserWarnCog, AutoDrawingPrompt
 from Code.Cogs.MessagingCogs import HelpCog, TagCog, CookieHuntCog, DiceRollerCog
-from Code.Cogs.SystemInteractionCogs import UserInteractionCog, RoleRequestCog, AirlockCog
+from Code.Cogs.SystemInteractionCogs import GlobalErrorHandlingCog, RoleRequestCog, AirlockCog
 
 if __name__ == '__main__':
     # Build the bot
@@ -22,8 +22,8 @@ if __name__ == '__main__':
     Base.ConfiguredCog.logger.info('Attaching functionality...')
 
     # Do not disable
-    Base.ConfiguredCog.logger.debug('Adding UserInteraction Cog.')
-    discord_bot.add_cog(UserInteractionCog(discord_bot))
+    Base.ConfiguredCog.logger.debug('Adding GlobalErrorHandling Cog.')
+    discord_bot.add_cog(GlobalErrorHandlingCog(discord_bot))
 
     # Do not disable
     Base.ConfiguredCog.logger.debug('Adding Help Cog.')

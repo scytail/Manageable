@@ -13,7 +13,7 @@ class RequestAction(Enum):
     LIST = 'list'  # list all the possible roles
 
 
-class UserInteractionCog(ConfiguredCog):
+class GlobalErrorHandlingCog(ConfiguredCog):
     """A Cog class meant to passively watch for events on the server.
 
     Methods
@@ -40,11 +40,18 @@ class UserInteractionCog(ConfiguredCog):
             self.logger.debug(f'Ignoring exception in command {command}, as another module has already handled it.')
             return
 
+        # Handle missing roles or missing commands
         if isinstance(exception, (commands.MissingRole, commands.MissingAnyRole)) or \
            isinstance(exception, commands.CommandNotFound):
             exception_type = type(exception)
             self.logger.warning(f'Passing exception of type {exception_type} to public users.')
             return await ctx.send(str(exception))
+        #  Handle missing arguments to commands
+        if isinstance(exception, commands.MissingRequiredArgument):
+            exception_type = type(exception)
+            self.logger.warning(f'Passing exception of type {exception_type} to public users.')
+            return await ctx.send('You are missing a required argument. Please consult the '
+                                  '`help` command for more details.')
 
         # Output the default exception to the console since it wasn't handled elsewhere
         command = ctx.command

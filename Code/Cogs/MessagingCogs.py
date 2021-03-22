@@ -551,19 +551,24 @@ class DiceRollerCog(ConfiguredCog):
     """
 
     @commands.command()
-    async def roll(self, ctx: commands.context, text: str):
+    async def roll(self, ctx: commands.context, dice: str):
         """The origin point for the dice roll command.
 
         Parameters
         ----------
         ctx:    discord.ext.commands.context    The command context.
-        text:   str                             The dice roll command to parse.
+        dice:   str                             The dice roll command to parse.
         """
-        if text:
+
+        if dice:
             lexer = DiceLexer()
             parser = DiceParser()
 
-            step_data, result = parser.parse(lexer.tokenize(text))
+            try:
+                step_data, result = parser.parse(lexer.tokenize(dice))
+            except TypeError as exception:
+                await ctx.send("There was an error with your roll syntax. Please try again.")
+                return
 
             if result.is_integer():
                 result = int(result)

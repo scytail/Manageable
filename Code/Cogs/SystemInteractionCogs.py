@@ -85,52 +85,56 @@ class RoleRequestCog(ConfiguredCog):
         role_query = ' '.join(target_role_list)
         action = action.lower()
 
-        if action == RequestAction.ADD.value:
-            # find role
-            role = self.find_role_in_guild(role_query, ctx.guild)
-            if not role:
-                await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
-                               f'Please check your spelling and try again.')
-                return
-
-            # make sure it's allowed to be manipulated
-            if not self._validate_role_against_whitelist(role):
-                await ctx.send("You are not allowed to interact with this role.")
-                return
-
-            # add role to user
-            if self.member_contains_role(role.name, ctx.author):
-                message = f'You already have that role.'
-            else:
-                await ctx.author.add_roles(role, reason='Role added via Manageable bot instance.')
-                message = f'You now have the `{role.name}` role.'
-        elif action == RequestAction.REMOVE.value:
-            # find role
-            role = self.find_role_in_guild(role_query, ctx.guild)
-            if not role:
-                await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
-                               f'Please check your spelling and try again.')
-                return
-
-            # make sure it's allowed to be manipulated
-            if not self._validate_role_against_whitelist(role):
-                await ctx.send("You are not allowed to interact with this role.")
-                return
-
-            # remove role from user
-            if self.member_contains_role(role.name, ctx.author):
-                await ctx.author.remove_roles(role, reason='Role removed via Manageable bot instance.')
-                message = f'You no longer have the `{role.name}` role.'
-            else:
-                message = f'You do not have that role.'
-        elif action == RequestAction.LIST.value:
-            # list all available roles
-            message = "__**Available roles to add/remove:**__"
-            for role_name in self.config["content"]["role_whitelist"]:
-                if self.find_role_in_guild(role_name, ctx.guild):
-                    message += f"\n{role_name}"
+        if ctx.guild is None:
+            message = 'This command must be used from a guild. Please go to the guild you wish to use the command on' \
+                      'and try again.'
         else:
-            message = f'Unknown role command `{action}`, please re-enter your command and try again.'
+            if action == RequestAction.ADD.value:
+                # find role
+                role = self.find_role_in_guild(role_query, ctx.guild)
+                if not role:
+                    await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
+                                   f'Please check your spelling and try again.')
+                    return
+
+                # make sure it's allowed to be manipulated
+                if not self._validate_role_against_whitelist(role):
+                    await ctx.send("You are not allowed to interact with this role.")
+                    return
+
+                # add role to user
+                if self.member_contains_role(role.name, ctx.author):
+                    message = f'You already have that role.'
+                else:
+                    await ctx.author.add_roles(role, reason='Role added via Manageable bot instance.')
+                    message = f'You now have the `{role.name}` role.'
+            elif action == RequestAction.REMOVE.value:
+                # find role
+                role = self.find_role_in_guild(role_query, ctx.guild)
+                if not role:
+                    await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
+                                   f'Please check your spelling and try again.')
+                    return
+
+                # make sure it's allowed to be manipulated
+                if not self._validate_role_against_whitelist(role):
+                    await ctx.send("You are not allowed to interact with this role.")
+                    return
+
+                # remove role from user
+                if self.member_contains_role(role.name, ctx.author):
+                    await ctx.author.remove_roles(role, reason='Role removed via Manageable bot instance.')
+                    message = f'You no longer have the `{role.name}` role.'
+                else:
+                    message = f'You do not have that role.'
+            elif action == RequestAction.LIST.value:
+                # list all available roles
+                message = "__**Available roles to add/remove:**__"
+                for role_name in self.config["content"]["role_whitelist"]:
+                    if self.find_role_in_guild(role_name, ctx.guild):
+                        message += f"\n{role_name}"
+            else:
+                message = f'Unknown role command `{action}`, please re-enter your command and try again.'
 
         await ctx.send(message)
 

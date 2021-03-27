@@ -435,23 +435,33 @@ class CookieHuntCog(ConfiguredCog):
                 # Get the high scores
                 top_collectors = DataAccess.get_top_cookie_collectors()
 
-                await ctx.send('**__Top Cookie Collectors__**')
-
                 # convert IDs to nicknames and display them
                 collectors_displayed = False
+                embed = None
                 for Discord_Id, Cookie_Count in top_collectors:
-                    collectors_displayed = True
+                    if not collectors_displayed:
+                        # Only build the embed the first time through the loop
+                        embed = Embed(title='Top Cookie Collectors',
+                                      color=ConfiguredCog.convert_color('#8a4b38'))
+
+                        collectors_displayed = True
 
                     discord_user = self.bot.get_user(int(Discord_Id))
                     if discord_user:
                         user_name = discord_user.name
                     else:
-                        user_name = 'Unknown'
+                        user_name = f'Unknown ({Discord_Id})'
 
-                    await ctx.send(f'{user_name}: {Cookie_Count}')
+                    user_name = f'{user_name}:'
 
-                if not collectors_displayed:
-                    # our query returned no results
+                    # Add field
+                    embed.add_field(name=user_name, value=Cookie_Count, inline=False)
+
+                if collectors_displayed:
+                    # We found collectors to display
+                    await ctx.send(embed=embed)
+                else:
+                    # Our query returned no results
                     await ctx.send('_No one has gotten any cookies yet!_')
             else:
                 # Unknown option error

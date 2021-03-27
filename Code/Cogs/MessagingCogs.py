@@ -34,10 +34,17 @@ class TagCog(ConfiguredCog):
         """
 
         if tag_name is not None:
-            try:
-                tag_data = ConfiguredCog.config['content']['tags'][tag_name]
-            except KeyError:
-                # No tag found, fail silently
+            tag_data = None
+            for tag in ConfiguredCog.config['content']['tags']:
+                # Check the tag, agnostic of case.
+                if tag.lower() == tag_name.lower():
+                    tag_name = tag
+                    tag_data = ConfiguredCog.config['content']['tags'][tag_name]
+                    break
+
+            # Throw an error since we didn't find a tag
+            if tag_data is None:
+                await ctx.send(f'The tag `{tag_name}` was not found.')
                 return
 
             # Build tag data

@@ -12,7 +12,7 @@
     "tag": [
       {
         "command": "tag <*optional:* name>",
-        "description": "Posts an embed in chat with the given details provided in the config file."
+        "description": "Posts an embed in chat with the given details provided in the config file. The name is _not_ case sensitive."
       }
     ],
     "warn": [

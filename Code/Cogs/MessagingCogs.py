@@ -8,6 +8,7 @@ from discord import Embed, Message, TextChannel
 from Code.Cogs.Base import ConfiguredCog
 from Code.Data import DataAccess
 from Code.Base.Parsing import DiceLexer, DiceParser
+from Code.Base.Dictionary import PhraseMap
 
 
 class CookieHuntSugarOptions(Enum):
@@ -44,7 +45,7 @@ class TagCog(ConfiguredCog):
 
             # Throw an error since we didn't find a tag
             if tag_data is None:
-                await ctx.send(f'The tag `{tag_name}` was not found.')
+                await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.TagNameNotFound).format(tag_name=tag_name))
                 return
 
             # Build tag data
@@ -64,8 +65,10 @@ class TagCog(ConfiguredCog):
             message = Embed(color=color, title=title, url=url, description=description)
         else:
             # Send list of tags
-            message = Embed(title='Available Tags',
-                            description='Please do `tag <tag_name>` to display the tag contents.')
+            embed_title = ConfiguredCog.dictionary.get_phrase(PhraseMap.AvailableTags)
+            embed_description = ConfiguredCog.dictionary.get_phrase(PhraseMap.DoTagNameToDisplayContents)
+            message = Embed(title=embed_title,
+                            description=embed_description)
             for tag_name in ConfiguredCog.config['content']['tags'].keys():
                 title = self._get_tag_data_safe(ConfiguredCog.config['content']['tags'][tag_name], 'title')
                 if title is None:
@@ -376,7 +379,7 @@ class CookieHuntCog(ConfiguredCog):
 
         if not self.cookie_available:
             # No cookie available message
-            await ctx.send('There is no cookie available right now. Sorry!')
+            await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.NoCookieAvailable))
             return
 
         # Mark that we got the cookie so no one else takes it (and prepare the next one)
@@ -394,7 +397,9 @@ class CookieHuntCog(ConfiguredCog):
         # check if goal was reached by the claimer
         if cookie_count >= cookie_goal:
             # announce winner
-            await ctx.send(f'Oh my, it looks like {ctx.author.name} is the cookie monster!')
+            winner_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.CookieHuntWinner)
+            winner_message = winner_message.format(winner_name=ctx.author.name)
+            await ctx.send(winner_message)
 
             # Award the role
             role = self.find_role_in_guild(winner_role_name, ctx.guild)
@@ -402,22 +407,29 @@ class CookieHuntCog(ConfiguredCog):
                 # Remove role from all users
                 for member in ctx.guild.members:
                     if role in member.roles:
-                        await member.remove_roles(role, reason='No longer the cookie hunt winner.')
+                        reason_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.NoLongerCookieHuntWinner)
+                        await member.remove_roles(role, reason=reason_message)
                 # Give the role to the winner
                 if not self.member_contains_role(role.name, ctx.author):
-                    await ctx.author.add_roles(role, reason=f'First to grab {cookie_goal} cookies.')
+                    reason_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.FirstToGrabXCookies)
+                    reason_message = reason_message.format(cookie_goal=cookie_goal)
+                    await ctx.author.add_roles(role, reason=reason_message)
 
             # reset cookie counts
             DataAccess.reset_all_cookies()
         else:
             # Figure out proper grammar
             if cookie_count == 1:
-                cookie_word = 'cookie'
+                cookie_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookie)
             else:
-                cookie_word = 'cookies'
+                cookie_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookies)
 
             # Send a message saying they got the cookie
-            await ctx.send(f'{ctx.author.name} got the cookie! They have gotten {cookie_count} {cookie_word}!')
+            cookie_awarded_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.CookieAwarded)
+            cookie_awarded_message = cookie_awarded_message.format(cookie_grabber_name=ctx.author.name,
+                                                                   cookie_count=cookie_count,
+                                                                   cookie_word=cookie_word)
+            await ctx.send(cookie_awarded_message)
 
     @commands.command()
     async def sugar(self, ctx: commands.Context, options: str = None):
@@ -441,7 +453,7 @@ class CookieHuntCog(ConfiguredCog):
                 for Discord_Id, Cookie_Count in top_collectors:
                     if not collectors_displayed:
                         # Only build the embed the first time through the loop
-                        embed = Embed(title='Top Cookie Collectors',
+                        embed = Embed(title=ConfiguredCog.dictionary.get_phrase(PhraseMap.TopCookieCollectors),
                                       color=ConfiguredCog.convert_color('#8a4b38'))
 
                         collectors_displayed = True
@@ -450,34 +462,43 @@ class CookieHuntCog(ConfiguredCog):
                     if discord_user:
                         user_name = discord_user.name
                     else:
-                        user_name = f'Unknown ({Discord_Id})'
+                        user_name = ConfiguredCog.dictionary.get_phrase(PhraseMap.UnknownCookieCollectorName)
+                        user_name = user_name.format(discord_id=Discord_Id)
 
-                    user_name = f'{user_name}:'
+                    user_name_phrase = ConfiguredCog.dictionary.get_phrase(PhraseMap.CookieHighScoreUserNameFormatting)
+                    user_name_phrase = user_name_phrase.format(user_name=user_name)
 
                     # Add field
-                    embed.add_field(name=user_name, value=Cookie_Count, inline=False)
+                    embed.add_field(name=user_name_phrase, value=Cookie_Count, inline=False)
 
                 if collectors_displayed:
                     # We found collectors to display
                     await ctx.send(embed=embed)
                 else:
                     # Our query returned no results
-                    await ctx.send('_No one has gotten any cookies yet!_')
+                    no_cookies_yet_phrase = ConfiguredCog.dictionary.get_phrase(PhraseMap.NoOneHasCookiesYet)
+                    await ctx.send(no_cookies_yet_phrase)
             else:
                 # Unknown option error
-                await ctx.send(f'Unknown command `{options}`, please re-enter your command and try again.')
+                error_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UnknownCommandOption)
+                error_message = error_message.format(option=options)
+                await ctx.send(error_message)
         else:
             # Find cookie count for the user
             cookie_count = DataAccess.get_cookie_count_by_discord_id(ctx.author.id)
 
             # Figure out proper grammar
             if cookie_count == 1:
-                cookie_word = 'cookie'
+                cookie_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookie)
             else:
-                cookie_word = 'cookies'
+                cookie_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookies)
 
             # Give the requesting user's score
-            await ctx.send(f'{ctx.author.name} has {cookie_count} {cookie_word}.')
+            message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UserHasXCookies)
+            message = message.format(cookie_grabber_name=ctx.author.name,
+                                     cookie_count=cookie_count,
+                                     cookie_word=cookie_word)
+            await ctx.send(message)
 
     @tasks.loop(hours=1)
     async def _check_to_send_cookie(self):
@@ -498,8 +519,8 @@ class CookieHuntCog(ConfiguredCog):
             # Build the cookie drop message
             prefix = ConfiguredCog.config['command_prefix']
             color = ConfiguredCog.convert_color('#8a4b38')
-            cookie_drop_embed = Embed(color=color, title=':cookie:', description=f'Here, have a cookie! Use '
-                                                                                 f'`{prefix}gimme` to take it!')
+            message = ConfiguredCog.dictionary.get_phrase(PhraseMap.HereHaveACookie).format(prefix=prefix)
+            cookie_drop_embed = Embed(color=color, title=':cookie:', description=message)
 
             # Pick a random channel to send it to
             channel = self._pick_random_channel_to_send()
@@ -583,7 +604,7 @@ class DiceRollerCog(ConfiguredCog):
 
             try:
                 step_data, result = parser.parse(lexer.tokenize(dice))
-            except TypeError as exception:
+            except TypeError as _:
                 await ctx.send("There was an error with your roll syntax. Please try again.")
                 return
 
@@ -591,12 +612,14 @@ class DiceRollerCog(ConfiguredCog):
                 result = int(result)
 
             color = ConfiguredCog.convert_color(ConfiguredCog.config['content']['dice_result_embed_color'])
-            title = f'Roll for {ctx.author.name}'
-            description = f'**Result:**\n' \
+            title = ConfiguredCog.dictionary.get_phrase(PhraseMap.RollFor).format(roller_name=ctx.author.name)
+            result_text = ConfiguredCog.dictionary.get_phrase(PhraseMap.Result)
+            steps_text = ConfiguredCog.dictionary.get_phrase(PhraseMap.Steps)
+            description = f'{result_text}\n' \
                           f'```\n' \
                           f'{result}\n' \
                           f'```\n' \
-                          f'**Steps:**\n' \
+                          f'{steps_text}\n' \
                           f'```\n'
             for step in step_data:
                 description += step + '\n'

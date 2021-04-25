@@ -6,7 +6,41 @@ from os import path
 
 
 class PhraseMap(Enum):
-    ExamplePhrase: 1
+    TagNameNotFound = 1
+    AvailableTags = 2
+    DoTagNameToDisplayContents = 3
+    NoCookieAvailable = 4
+    CookieHuntWinner = 5
+    NoLongerCookieHuntWinner = 6
+    FirstToGrabXCookies = 7
+    CookieAwarded = 8
+    Cookie = 9
+    Cookies = 10
+    TopCookieCollectors = 11
+    UnknownCookieCollectorName = 12
+    CookieHighScoreUserNameFormatting = 13
+    NoOneHasCookiesYet = 14
+    UnknownCommandOption = 15
+    UserHasXCookies = 16
+    HereHaveACookie = 17
+    RollFor = 18
+    Result = 19
+    Steps = 20
+    YouAreMissingARequiredArg = 21
+    InternalErrorOccurred = 22
+    NoRoleByThatNameExists = 23
+    YouAreNotAllowedToInteractWithRole = 24
+    YouAlreadyHaveThatRole = 25
+    RoleAddedByManageableBot = 26
+    YouNowHaveTheRole = 27
+    ThisCommandMustBeUsedFromAGuild = 28
+    RoleRemovedViaManageableBot = 29
+    YouNoLongerHaveTheRole = 30
+    YouDoNotHaveThatRole = 31
+    AvailableRoles = 32
+    AirlockCommandOnlyAvailable = 33
+    IssueFindingTheRole = 34
+    UserRequestedRelease = 35
 
 
 class Dictionary:

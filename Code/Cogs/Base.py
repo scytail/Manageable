@@ -3,6 +3,7 @@ import logging
 from discord import Role, Guild, Member
 from discord.ext import commands
 from typing import Optional
+from Code.Base.Dictionary import Dictionary
 
 # The config file to load data from.
 CONFIG_FILE = 'Config/config.json'
@@ -122,6 +123,7 @@ class ConfiguredCog(commands.Cog):
 
     config: dict = load_config(CONFIG_FILE)
     logger: logging.Logger = build_logger(config['verbose_logging'])
+    dictionary: Dictionary = Dictionary(config['language'])
 
     def __init__(self, bot: commands.Bot):
         """Initializes the Base class for usage

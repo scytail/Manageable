@@ -5,6 +5,7 @@ from discord import Member, Embed, TextChannel
 from discord.ext import commands, tasks
 from Code.Cogs.Base import ConfiguredCog
 from Code.Data import DataAccess
+from Code.Base.Dictionary import PhraseMap
 
 
 class WarnAction(Enum):
@@ -72,7 +73,8 @@ class UserWarnCog(ConfiguredCog):
                 warning_count = self._view_user_warnings(target_member)
                 message = f'The user "{user_name_query}" has {warning_count} warnings.'
             else:
-                message = f'Unknown warning command `{action}`, please re-enter your command and try again.'
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UnknownCommandOption)
+                message = message.format(option=action)
 
             await ctx.send(message)
 

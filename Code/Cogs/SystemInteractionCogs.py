@@ -3,6 +3,7 @@ import traceback
 from discord.ext import commands
 from discord import Role, Message
 from Code.Cogs.Base import ConfiguredCog
+from Code.Base.Dictionary import PhraseMap
 
 
 class RequestAction(Enum):
@@ -50,14 +51,13 @@ class GlobalErrorHandlingCog(ConfiguredCog):
         if isinstance(exception, commands.MissingRequiredArgument):
             exception_type = type(exception)
             self.logger.warning(f'Passing exception of type {exception_type} to public users.')
-            return await ctx.send('You are missing a required argument. Please consult the '
-                                  '`help` command for more details.')
+            return await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.YouAreMissingARequiredArg))
 
         # Output the default exception to the console since it wasn't handled elsewhere
         command = ctx.command
         self.logger.error(f'Skipping exception in command {command}: {exception}')
         self.logger.info(traceback.format_exc())
-        return await ctx.send('An internal error occurred while processing your command.')
+        return await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.InternalErrorOccurred))
 
 
 class RoleRequestCog(ConfiguredCog):
@@ -86,55 +86,62 @@ class RoleRequestCog(ConfiguredCog):
         action = action.lower()
 
         if ctx.guild is None:
-            message = 'This command must be used from a guild. Please go to the guild you wish to use the command on' \
-                      'and try again.'
+            message = ConfiguredCog.dictionary.get_phrase(PhraseMap.ThisCommandMustBeUsedFromAGuild)
         else:
             if action == RequestAction.ADD.value:
                 # find role
                 role = self.find_role_in_guild(role_query, ctx.guild)
                 if not role:
-                    await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
-                                   f'Please check your spelling and try again.')
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.NoRoleByThatNameExists)
+                    message = message.format(role_query=role_query)
+                    await ctx.send(message)
                     return
 
                 # make sure it's allowed to be manipulated
                 if not self._validate_role_against_whitelist(role):
-                    await ctx.send("You are not allowed to interact with this role.")
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.YouAreNotAllowedToInteractWithRole)
+                    await ctx.send(message)
                     return
 
                 # add role to user
                 if self.member_contains_role(role.name, ctx.author):
-                    message = f'You already have that role.'
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.YouAlreadyHaveThatRole)
                 else:
-                    await ctx.author.add_roles(role, reason='Role added via Manageable bot instance.')
-                    message = f'You now have the `{role.name}` role.'
+                    reason_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.RoleAddedByManageableBot)
+                    await ctx.author.add_roles(role, reason=reason_message)
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.YouNowHaveTheRole)
+                    message = message.format(role_name=role.name)
             elif action == RequestAction.REMOVE.value:
                 # find role
                 role = self.find_role_in_guild(role_query, ctx.guild)
                 if not role:
-                    await ctx.send(f'No role by the name of `{role_query}` exists in this guild. '
-                                   f'Please check your spelling and try again.')
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.NoRoleByThatNameExists)
+                    message = message.format(role_query=role_query)
+                    await ctx.send(message)
                     return
 
                 # make sure it's allowed to be manipulated
                 if not self._validate_role_against_whitelist(role):
-                    await ctx.send("You are not allowed to interact with this role.")
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.YouAreNotAllowedToInteractWithRole)
+                    await ctx.send(message)
                     return
 
                 # remove role from user
                 if self.member_contains_role(role.name, ctx.author):
-                    await ctx.author.remove_roles(role, reason='Role removed via Manageable bot instance.')
-                    message = f'You no longer have the `{role.name}` role.'
+                    reason_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.RoleRemovedViaManageableBot)
+                    await ctx.author.remove_roles(role, reason=reason_message)
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.YouNoLongerHaveTheRole)
+                    message = message.format(role_name=role.name)
                 else:
-                    message = f'You do not have that role.'
+                    message = ConfiguredCog.dictionary.get_phrase(PhraseMap.YouDoNotHaveThatRole)
             elif action == RequestAction.LIST.value:
                 # list all available roles
-                message = "__**Available roles to add/remove:**__"
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.AvailableRoles)
                 for role_name in self.config["content"]["role_whitelist"]:
                     if self.find_role_in_guild(role_name, ctx.guild):
                         message += f"\n{role_name}"
             else:
-                message = f'Unknown role command `{action}`, please re-enter your command and try again.'
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UnknownCommandOption).format(option=action)
 
         await ctx.send(message)
 
@@ -177,7 +184,9 @@ class AirlockCog(ConfiguredCog):
         airlock_channel_name = ConfiguredCog.config['content']['airlock_channel']
         if ctx.guild is None or ctx.channel.name != airlock_channel_name:
             self.logger.debug(f"Airlock release command was attempted to be called from an invalid location.")
-            await ctx.send(f'This command can only be accessed from the #{airlock_channel_name} channel.')
+            message = ConfiguredCog.dictionary.get_phrase(PhraseMap.AirlockCommandOnlyAvailable)
+            message = message.format(airlock_channel_name=airlock_channel_name)
+            await ctx.send(message)
             return
 
         # Give the message sender a predefined role
@@ -185,16 +194,17 @@ class AirlockCog(ConfiguredCog):
         role = self.find_role_in_guild(role_name, ctx.guild)
         if not role:
             self.logger.error(f"Encountered an issue attempting to resolve the airlock role specified in the config.")
-            await ctx.send(f"There was an issue finding the role to give to the sender.")
+            await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.IssueFindingTheRole))
             return
 
         if self.member_contains_role(role.name, ctx.author):
             self.logger.warning(f'{ctx.author.name} requested an airlock release when they already had the role.')
-            await ctx.send('You already have the airlock release role.')
+            await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.YouAlreadyHaveThatRole))
             return
         else:
             self.logger.debug(f'Released {ctx.author.name} from the airlock.')
-            await ctx.author.add_roles(role, reason='User requested release from the airlock channel.')
+            reason_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UserRequestedRelease)
+            await ctx.author.add_roles(role, reason=reason_message)
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):

@@ -357,8 +357,9 @@ class CookieHuntCog(ConfiguredCog):
 
         # Init instance vars
         self.cookie_available = False
-        self.cookie_timestamp = None
-        self.cookie_drop_delay_hours = 0
+        self.cookie_prepared_timestamp = None
+        self.cookie_drop_delay_hours = None
+        self.cookie_drop_delay_minutes = None
 
         # Start the task
         self._check_to_send_cookie.start()
@@ -479,20 +480,21 @@ class CookieHuntCog(ConfiguredCog):
             # Give the requesting user's score
             await ctx.send(f'{ctx.author.name} has {cookie_count} {cookie_word}.')
 
-    @tasks.loop(hours=1)
+    @tasks.loop(minutes=1)
     async def _check_to_send_cookie(self):
         """A looping task to check if a cookie needs to be sent. Checks a few parameters such as a randomized time
-           delay and whether or not there's already an available cookie to claim. If all the parameters have been met,
+           delay and whether there's already an available cookie to claim. If all the parameters have been met,
            picks a random channel from a configured list and drops a cookie into that channel for claiming.
         """
-        # If random number is None, pick random number between 24 and 48
-        if self.cookie_drop_delay_hours is None or self.cookie_drop_delay_hours == 0:
+        # If random number isn't set, plan out a new cookie drop
+        if self.cookie_drop_delay_hours is None:
             self._prep_cookie_drop()
 
         # If current timestamp is after the logged timestamp + random number's hours, then drop a cookie in a
         # random channel from the list of channels (assuming we can find the channels by name)
-        time_delta = datetime.datetime.now() - self.cookie_timestamp
-        if time_delta > datetime.timedelta(hours=self.cookie_drop_delay_hours) and not self.cookie_available:
+        time_delta = datetime.datetime.now() - self.cookie_prepared_timestamp
+        if time_delta > datetime.timedelta(hours=self.cookie_drop_delay_hours, minutes=self.cookie_drop_delay_minutes) \
+                and not self.cookie_available:
             self.logger.debug('Dropping a cookie.')
 
             # Build the cookie drop message
@@ -529,10 +531,12 @@ class CookieHuntCog(ConfiguredCog):
         min_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][0]
         max_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][1]
         hour_delay = randint(min_hour, max_hour)
-        self.logger.debug(f'Preparing a cookie drop for about {hour_delay} hours from now.')
+        minute_delay = randint(0, 60)  # Picks a random minute within the hour to drop it
+        self.logger.debug(f'Preparing a cookie drop for about {hour_delay} hours and {minute_delay} minutes from now.')
         self.cookie_available = False
-        self.cookie_timestamp = datetime.datetime.now()
+        self.cookie_prepared_timestamp = datetime.datetime.now()
         self.cookie_drop_delay_hours = hour_delay
+        self.cookie_drop_delay_minutes = minute_delay
 
     def _pick_random_channel_to_send(self) -> Optional[TextChannel]:
         """Takes the preconfigured list of available channels that we can drop a cookie into, and returns a possible

@@ -1,7 +1,7 @@
 import datetime
 import json
 from enum import Enum
-from random import randint, sample
+from random import randint, sample, choices
 from typing import Optional
 from discord.ext import commands, tasks
 from discord import Embed, Message, TextChannel
@@ -13,6 +13,14 @@ from Code.Base.Parsing import DiceLexer, DiceParser
 class CookieHuntSugarOptions(Enum):
     """An enum listing out all the available sugar command options."""
     HIGH = 'high'
+
+
+class CookieType(Enum):
+    """An enum listing out all the available cookie types"""
+    CHOCO_CHIP = 1
+    RAISIN_OATMEAL = 2
+    DOUBLE_CHOCO = 3
+    BLUE = 4
 
 
 class TagCog(ConfiguredCog):
@@ -135,7 +143,7 @@ class HelpCog(ConfiguredCog):
         await ctx.message.add_reaction(self._mail)
 
         # Only allow pagination manipulation for 10 minutes
-        while datetime.datetime.now()-request_start_time < datetime.timedelta(minutes=10):
+        while datetime.datetime.now() - request_start_time < datetime.timedelta(minutes=10):
             # Push the current embed to the user
             sent_message = await action(embed=pages[index])
             if sent_message is not None:
@@ -345,6 +353,11 @@ class CookieHuntCog(ConfiguredCog):
     sugar       The origin point for the `sugar` command.
     """
 
+    COOKIE_TYPE_WEIGHTS = {CookieType.CHOCO_CHIP: 2,
+                           CookieType.RAISIN_OATMEAL: 1,
+                           CookieType.DOUBLE_CHOCO: .5,
+                           CookieType.BLUE: .5}
+
     def __init__(self, bot: commands.Bot):
         """Initializes the cog and starts the automated task.
 
@@ -360,6 +373,7 @@ class CookieHuntCog(ConfiguredCog):
         self.cookie_prepared_timestamp = None
         self.cookie_drop_delay_hours = None
         self.cookie_drop_delay_minutes = None
+        self.cookie_type = None
 
         # Start the task
         self._check_to_send_cookie.start()
@@ -380,14 +394,31 @@ class CookieHuntCog(ConfiguredCog):
             await ctx.send('There is no cookie available right now. Sorry!')
             return
 
+        # Write down the pertinent information for the drop
+        cookie_type = self.cookie_type
+
         # Mark that we got the cookie so no one else takes it (and prepare the next one)
         self._prep_cookie_drop()
 
-        # Find the user in the db so we can give them a cookie (should add a user if none found)
-        db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+        # Award points as needed
+        if cookie_type == CookieType.CHOCO_CHIP:
+            cookie_count_mod = 1
+            db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+        elif cookie_type == CookieType.RAISIN_OATMEAL:
+            cookie_count_mod = -1
+            db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+        elif cookie_type == CookieType.BLUE:
+            cookie_count_mod = -1
+            db_user_id = DataAccess.get_top_cookie_collectors(1)
+            db_user_id = db_user_id[0].Discord_Id
+        elif cookie_type == CookieType.DOUBLE_CHOCO:
+            cookie_count_mod = 2
+            db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+        else:
+            cookie_count_mod = 0
+            db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
 
-        # Give them a cookie point
-        cookie_count = DataAccess.add_cookie(db_user_id)
+        cookie_count = DataAccess.modify_cookie_count(db_user_id, cookie_count_mod)
 
         cookie_goal = ConfiguredCog.config['content']['cookie_hunt_goal']
         winner_role_name = ConfiguredCog.config['content']['cookie_hunt_winner_role']
@@ -413,12 +444,25 @@ class CookieHuntCog(ConfiguredCog):
         else:
             # Figure out proper grammar
             if cookie_count == 1:
-                cookie_word = 'cookie'
+                cookie_grammar_word = 'cookie'
             else:
-                cookie_word = 'cookies'
+                cookie_grammar_word = 'cookies'
+
+            # Figure out what type of cookie we got.
+            if cookie_type == CookieType.CHOCO_CHIP:
+                cookie_type_word = 'chocolate chip'
+            elif cookie_type == CookieType.RAISIN_OATMEAL:
+                cookie_type_word = 'raisin oatmeal'
+            elif cookie_type == CookieType.DOUBLE_CHOCO:
+                cookie_type_word = 'double-chocolate'
+            elif cookie_type == CookieType.BLUE:
+                cookie_type_word = 'blue'
+            else:
+                cookie_type_word = 'fake'
 
             # Send a message saying they got the cookie
-            await ctx.send(f'{ctx.author.name} got the cookie! They have gotten {cookie_count} {cookie_word}!')
+            await ctx.send(f'{ctx.author.name} got a {cookie_type_word} cookie! '
+                           f'They have gotten {cookie_count} {cookie_grammar_word}!')
 
     @commands.command()
     async def sugar(self, ctx: commands.Context, options: str = None):
@@ -434,7 +478,7 @@ class CookieHuntCog(ConfiguredCog):
         if options is not None:
             if options.lower() == CookieHuntSugarOptions.HIGH.value:
                 # Get the high scores
-                top_collectors = DataAccess.get_top_cookie_collectors()
+                top_collectors = DataAccess.get_top_cookie_collectors(3)
 
                 # convert IDs to nicknames and display them
                 collectors_displayed = False
@@ -480,8 +524,20 @@ class CookieHuntCog(ConfiguredCog):
             # Give the requesting user's score
             await ctx.send(f'{ctx.author.name} has {cookie_count} {cookie_word}.')
 
+    @commands.command('forcedrop')
+    @commands.has_any_role(*ConfiguredCog.config['mod_roles'])
+    async def force_drop(self, ctx: commands.Context):
+        """Forces a cookie to drop ahead of schedule.
+
+        Parameters
+        ----------
+        ctx:    commands.Context    The command context.
+        """
+
+        await self._check_to_send_cookie(True)
+
     @tasks.loop(minutes=1)
-    async def _check_to_send_cookie(self):
+    async def _check_to_send_cookie(self, force_drop: bool = False):
         """A looping task to check if a cookie needs to be sent. Checks a few parameters such as a randomized time
            delay and whether there's already an available cookie to claim. If all the parameters have been met,
            picks a random channel from a configured list and drops a cookie into that channel for claiming.
@@ -493,7 +549,8 @@ class CookieHuntCog(ConfiguredCog):
         # If current timestamp is after the logged timestamp + random number's hours, then drop a cookie in a
         # random channel from the list of channels (assuming we can find the channels by name)
         time_delta = datetime.datetime.now() - self.cookie_prepared_timestamp
-        if time_delta > datetime.timedelta(hours=self.cookie_drop_delay_hours, minutes=self.cookie_drop_delay_minutes) \
+        if (force_drop or time_delta > datetime.timedelta(hours=self.cookie_drop_delay_hours,
+                                                          minutes=self.cookie_drop_delay_minutes)) \
                 and not self.cookie_available:
             self.logger.debug('Dropping a cookie.')
 
@@ -531,12 +588,15 @@ class CookieHuntCog(ConfiguredCog):
         min_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][0]
         max_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][1]
         hour_delay = randint(min_hour, max_hour)
-        minute_delay = randint(0, 60)  # Picks a random minute within the hour to drop it
-        self.logger.debug(f'Preparing a cookie drop for about {hour_delay} hours and {minute_delay} minutes from now.')
+        minute_delay = randint(0, 59)  # Picks a random minute within the hour to drop it
+        cookie_type = choices(list(self.COOKIE_TYPE_WEIGHTS.keys()), list(self.COOKIE_TYPE_WEIGHTS.values()))[0]
+        self.logger.debug(f'Preparing a cookie drop for about {hour_delay} hours and {minute_delay} minutes from now.'
+                          f'It is a {cookie_type} cookie.')
         self.cookie_available = False
         self.cookie_prepared_timestamp = datetime.datetime.now()
         self.cookie_drop_delay_hours = hour_delay
         self.cookie_drop_delay_minutes = minute_delay
+        self.cookie_type = cookie_type
 
     def _pick_random_channel_to_send(self) -> Optional[TextChannel]:
         """Takes the preconfigured list of available channels that we can drop a cookie into, and returns a possible

@@ -5,7 +5,7 @@ from discord.ext import commands
 from typing import Optional
 
 # The config file to load data from.
-CONFIG_FILE = 'Config/config.json'
+CONFIG_FILE = 'Config/config_test.json'
 
 
 def build_logger(enable_debug: bool) -> logging.Logger:

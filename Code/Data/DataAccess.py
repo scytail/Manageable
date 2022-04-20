@@ -260,13 +260,14 @@ def delete_warning(warning_id: int, **kwargs):
 
 
 @DatabaseMethod
-def add_cookie(user_id: int, **kwargs) -> int:
+def modify_cookie_count(user_id: int, count_modifier: int, **kwargs) -> int:
     """Adds a cookie to the provided database user ID.
 
     Parameters
     ----------
-    user_id:    int     The user table primary key related to the discord member that should receive the cookie point.
-    kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
+    user_id:        int     The user table primary key related to the discord member that should receive the modifier.
+    count_modifier: int     The amount to modify the cookie count by.
+    kwargs:         dict    Keyword arguments for the method, must include a `session` argument.
 
     Returns
     -------
@@ -275,19 +276,29 @@ def add_cookie(user_id: int, **kwargs) -> int:
 
     session = _get_session(kwargs)
 
-    cookie_count = 1
-
     cookie_row = session.query(CookieTable).filter(CookieTable.User_Id == user_id).first()
 
     if cookie_row is None:
         # Create cookie row
 
-        cookie_row = CookieTable(User_Id=user_id, Cookie_Count=cookie_count)
+        if count_modifier < 0:
+            # Make sure we don't go negative
+            count_modifier = 0
+
+        cookie_row = CookieTable(User_Id=user_id, Cookie_Count=count_modifier)
         session.add(cookie_row)
+
+        cookie_count = count_modifier
     else:
-        # Add one to cookie row
-        # (Note that according to some stack overflow discussion "+=" can create race conditions)
-        cookie_row.Cookie_Count = cookie_row.Cookie_Count + 1
+        # Modify the cookie count
+
+        if count_modifier < 0 and cookie_row.Cookie_Count < abs(count_modifier):
+            # Make sure we don't go negative
+            cookie_row.Cookie_Count = 0
+        else:
+            # Note that according to some stack overflow discussion "+=" can create race conditions
+            cookie_row.Cookie_Count = cookie_row.Cookie_Count + count_modifier
+
         cookie_count = cookie_row.Cookie_Count
 
     session.flush()
@@ -301,7 +312,7 @@ def get_cookie_count_by_discord_id(discord_id: int, **kwargs) -> int:
 
     Parameters
     ----------
-    discord_id:     int     The discord ID to find the cookie count for.
+    discord_id: int     The discord ID to find the cookie count for.
     kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
 
     Returns
@@ -324,16 +335,17 @@ def get_cookie_count_by_discord_id(discord_id: int, **kwargs) -> int:
 
 
 @DatabaseMethod
-def get_top_cookie_collectors(**kwargs) -> Query:
-    """Gets the top three cookie collectors' discord IDs and how many cookies they've collected.
+def get_top_cookie_collectors(count: int, **kwargs) -> Query:
+    """Gets the top cookie collectors' discord IDs and how many cookies they've collected.
 
     Parameters
     ----------
+    count:      int     The number of results to find.
     kwargs:     dict    Keyword arguments for the method, must include a `session` argument.
 
     Returns
     -------
-    Query   The top three collectors, with their Discord_Id and Cookie_Count data.
+    Query   The top number of collectors, with their Discord_Id and Cookie_Count data.
     """
     session = _get_session(kwargs)
 
@@ -342,7 +354,7 @@ def get_top_cookie_collectors(**kwargs) -> Query:
         join(UserTable.Cookie). \
         filter(CookieTable.Cookie_Count > 0). \
         order_by(CookieTable.Cookie_Count.desc()). \
-        limit(3)
+        limit(count)
 
     return top_collectors
 

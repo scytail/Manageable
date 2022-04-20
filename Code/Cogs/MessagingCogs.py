@@ -600,7 +600,7 @@ class CookieHuntCog(ConfiguredCog):
 
         return cookie_data_dict
 
-    def _get_cookie_weights(self) -> list[float]:
+    def _get_cookie_weights(self) -> list:
         """Gets an ordered list of weights mapped to the cookie data dictionary
 
             Returns

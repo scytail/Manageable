@@ -1,0 +1,26 @@
+[
+  {
+    "name": "chocolate chip",
+    "weight": "10",
+    "modifier": 1,
+    "target": "claimer"
+  },
+  {
+    "name": "oatmeal raisin",
+    "weight": "2",
+    "modifier": -1,
+    "target": "claimer"
+  },
+  {
+    "name": "double chocolate",
+    "weight": "2",
+    "modifier": 2,
+    "target": "claimer"
+  },
+  {
+    "name": "blue",
+    "weight": "1",
+    "modifier": -1,
+    "target": "leader"
+  }
+]

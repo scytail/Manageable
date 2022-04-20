@@ -380,7 +380,6 @@ class CookieHuntCog(ConfiguredCog):
         ----------
         ctx:    commands.Context    The command context.
         """
-        target_member = ctx.author
 
         if not self.cookie_available:
             # No cookie available message
@@ -395,14 +394,15 @@ class CookieHuntCog(ConfiguredCog):
 
         # Find the target's ID
         if cookie_type['target'] == CookieHuntTarget.CLAIMER:
-            db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+            target_discord_id = ctx.author.id
         elif cookie_type['target'] == CookieHuntTarget.LEADER:
-            db_user_id = DataAccess.get_top_cookie_collectors(1)[0].Discord_Id
+            target_discord_id = DataAccess.get_top_cookie_collectors(1)[0].Discord_Id
         else:
             # Invalid target, just assume it's the claimer
-            db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+            target_discord_id = ctx.author.id
 
         # Award points as needed
+        db_user_id = DataAccess.find_user_id_by_discord_id(target_discord_id)
         cookie_count = DataAccess.modify_cookie_count(db_user_id, cookie_type['modifier'])
 
         # check if goal was reached by the claimer
@@ -433,8 +433,18 @@ class CookieHuntCog(ConfiguredCog):
                 cookie_grammar_word = 'cookies'
 
             # Send a message saying they got the cookie
-            await ctx.send(f'{ctx.author.name} got a {cookie_type["name"]} cookie! '
-                           f'They have gotten {cookie_count} {cookie_grammar_word}!')
+            if cookie_type['target'] == CookieHuntTarget.CLAIMER:
+                await ctx.send(f'{ctx.author.name} got a {cookie_type["name"]} cookie! '
+                               f'They now have {cookie_count} {cookie_grammar_word}.')
+            else:
+                target_user = self.bot.get_user(int(target_discord_id))
+                if target_user:
+                    target_user_name = target_user.name
+                else:
+                    target_user_name = f'Unknown ({target_discord_id})'
+
+                await ctx.send(f'{ctx.author.name} got a {cookie_type["name"]} cookie! '
+                               f'The leader, {target_user_name}, now has {cookie_count} {cookie_grammar_word}.')
 
     @commands.command()
     async def sugar(self, ctx: commands.Context, options: str = None):

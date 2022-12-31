@@ -1,7 +1,7 @@
 import datetime
 import json
 from enum import Enum
-from random import randint, sample
+from random import randint, sample, choices
 from typing import Optional
 from discord.ext import commands, tasks
 from discord import Embed, Message, TextChannel
@@ -14,6 +14,11 @@ from Code.Base.Dictionary import PhraseMap
 class CookieHuntSugarOptions(Enum):
     """An enum listing out all the available sugar command options."""
     HIGH = 'high'
+
+
+class CookieHuntTarget(Enum):
+    CLAIMER = 'claimer'
+    LEADER = 'leader'
 
 
 class TagCog(ConfiguredCog):
@@ -138,7 +143,7 @@ class HelpCog(ConfiguredCog):
         await ctx.message.add_reaction(self._mail)
 
         # Only allow pagination manipulation for 10 minutes
-        while datetime.datetime.now()-request_start_time < datetime.timedelta(minutes=10):
+        while datetime.datetime.now() - request_start_time < datetime.timedelta(minutes=10):
             # Push the current embed to the user
             sent_message = await action(embed=pages[index])
             if sent_message is not None:
@@ -359,9 +364,12 @@ class CookieHuntCog(ConfiguredCog):
         super().__init__(bot)
 
         # Init instance vars
+        self.cookie_data = self._parse_cookie_data()
         self.cookie_available = False
-        self.cookie_timestamp = None
-        self.cookie_drop_delay_hours = 0
+        self.cookie_prepared_timestamp = None
+        self.cookie_drop_delay_hours = None
+        self.cookie_drop_delay_minutes = None
+        self.cookie_type = None
 
         # Start the task
         self._check_to_send_cookie.start()
@@ -375,26 +383,33 @@ class CookieHuntCog(ConfiguredCog):
         ----------
         ctx:    commands.Context    The command context.
         """
-        target_member = ctx.author
 
         if not self.cookie_available:
             # No cookie available message
             await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.NoCookieAvailable))
             return
 
+        # Write down the pertinent information for the drop since it's about to get wiped
+        cookie_type = self.cookie_type
+
         # Mark that we got the cookie so no one else takes it (and prepare the next one)
         self._prep_cookie_drop()
 
-        # Find the user in the db so we can give them a cookie (should add a user if none found)
-        db_user_id = DataAccess.find_user_id_by_discord_id(target_member.id)
+        # Find the target's ID
+        if cookie_type['target'] == CookieHuntTarget.CLAIMER:
+            target_discord_id = ctx.author.id
+        elif cookie_type['target'] == CookieHuntTarget.LEADER:
+            target_discord_id = DataAccess.get_top_cookie_collectors(1)[0].Discord_Id
+        else:
+            # Invalid target, just assume it's the claimer
+            target_discord_id = ctx.author.id
 
-        # Give them a cookie point
-        cookie_count = DataAccess.add_cookie(db_user_id)
-
-        cookie_goal = ConfiguredCog.config['content']['cookie_hunt_goal']
-        winner_role_name = ConfiguredCog.config['content']['cookie_hunt_winner_role']
+        # Award points as needed
+        db_user_id = DataAccess.find_user_id_by_discord_id(target_discord_id)
+        cookie_count = DataAccess.modify_cookie_count(db_user_id, cookie_type['modifier'])
 
         # check if goal was reached by the claimer
+        cookie_goal = ConfiguredCog.config['content']['cookie_hunt_goal']
         if cookie_count >= cookie_goal:
             # announce winner
             winner_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.CookieHuntWinner)
@@ -402,6 +417,7 @@ class CookieHuntCog(ConfiguredCog):
             await ctx.send(winner_message)
 
             # Award the role
+            winner_role_name = ConfiguredCog.config['content']['cookie_hunt_winner_role']
             role = self.find_role_in_guild(winner_role_name, ctx.guild)
             if role:
                 # Remove role from all users
@@ -420,16 +436,23 @@ class CookieHuntCog(ConfiguredCog):
         else:
             # Figure out proper grammar
             if cookie_count == 1:
-                cookie_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookie)
+                cookie_grammar_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookie)
             else:
-                cookie_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookies)
+                cookie_grammar_word = ConfiguredCog.dictionary.get_phrase(PhraseMap.Cookies)
 
             # Send a message saying they got the cookie
-            cookie_awarded_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.CookieAwarded)
-            cookie_awarded_message = cookie_awarded_message.format(cookie_grabber_name=ctx.author.name,
-                                                                   cookie_count=cookie_count,
-                                                                   cookie_word=cookie_word)
-            await ctx.send(cookie_awarded_message)
+            if cookie_type['target'] == CookieHuntTarget.CLAIMER:
+                await ctx.send(f'{ctx.author.name} got a {cookie_type["name"]} cookie! '
+                               f'They now have {cookie_count} {cookie_grammar_word}.')
+            else:
+                target_user = self.bot.get_user(int(target_discord_id))
+                if target_user:
+                    target_user_name = target_user.name
+                else:
+                    target_user_name = f'Unknown ({target_discord_id})'
+
+                await ctx.send(f'{ctx.author.name} got a {cookie_type["name"]} cookie! '
+                               f'The leader, {target_user_name}, now has {cookie_count} {cookie_grammar_word}.')
 
     @commands.command()
     async def sugar(self, ctx: commands.Context, options: str = None):
@@ -445,7 +468,7 @@ class CookieHuntCog(ConfiguredCog):
         if options is not None:
             if options.lower() == CookieHuntSugarOptions.HIGH.value:
                 # Get the high scores
-                top_collectors = DataAccess.get_top_cookie_collectors()
+                top_collectors = DataAccess.get_top_cookie_collectors(3)
 
                 # convert IDs to nicknames and display them
                 collectors_displayed = False
@@ -500,20 +523,34 @@ class CookieHuntCog(ConfiguredCog):
                                      cookie_word=cookie_word)
             await ctx.send(message)
 
-    @tasks.loop(hours=1)
-    async def _check_to_send_cookie(self):
+    @commands.command('forcedrop')
+    @commands.has_any_role(*ConfiguredCog.config['mod_roles'])
+    async def force_drop(self, ctx: commands.Context):
+        """Forces a cookie to drop ahead of schedule.
+
+        Parameters
+        ----------
+        ctx:    commands.Context    The command context.
+        """
+
+        await self._check_to_send_cookie(True)
+
+    @tasks.loop(minutes=1)
+    async def _check_to_send_cookie(self, force_drop: bool = False):
         """A looping task to check if a cookie needs to be sent. Checks a few parameters such as a randomized time
-           delay and whether or not there's already an available cookie to claim. If all the parameters have been met,
+           delay and whether there's already an available cookie to claim. If all the parameters have been met,
            picks a random channel from a configured list and drops a cookie into that channel for claiming.
         """
-        # If random number is None, pick random number between 24 and 48
-        if self.cookie_drop_delay_hours is None or self.cookie_drop_delay_hours == 0:
+        # If random number isn't set, plan out a new cookie drop
+        if self.cookie_drop_delay_hours is None:
             self._prep_cookie_drop()
 
         # If current timestamp is after the logged timestamp + random number's hours, then drop a cookie in a
         # random channel from the list of channels (assuming we can find the channels by name)
-        time_delta = datetime.datetime.now() - self.cookie_timestamp
-        if time_delta > datetime.timedelta(hours=self.cookie_drop_delay_hours) and not self.cookie_available:
+        time_delta = datetime.datetime.now() - self.cookie_prepared_timestamp
+        if (force_drop or time_delta > datetime.timedelta(hours=self.cookie_drop_delay_hours,
+                                                          minutes=self.cookie_drop_delay_minutes)) \
+                and not self.cookie_available:
             self.logger.debug('Dropping a cookie.')
 
             # Build the cookie drop message
@@ -550,10 +587,48 @@ class CookieHuntCog(ConfiguredCog):
         min_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][0]
         max_hour = ConfiguredCog.config['content']['cookie_hunt_hour_variance'][1]
         hour_delay = randint(min_hour, max_hour)
-        self.logger.debug(f'Preparing a cookie drop for about {hour_delay} hours from now.')
+        minute_delay = randint(0, 59)  # Picks a random minute within the hour to drop it
+        cookie_type = choices(self.cookie_data, self._get_cookie_weights())[0]
+
+        self.logger.debug(f'Preparing a cookie drop for about {hour_delay} hours and {minute_delay} minutes from now.'
+                          f'It is a {cookie_type["name"]} cookie.')
         self.cookie_available = False
-        self.cookie_timestamp = datetime.datetime.now()
+        self.cookie_prepared_timestamp = datetime.datetime.now()
         self.cookie_drop_delay_hours = hour_delay
+        self.cookie_drop_delay_minutes = minute_delay
+        self.cookie_type = cookie_type
+
+    @staticmethod
+    def _parse_cookie_data() -> dict:
+        """Parses the cookie file out into its corresponding data
+
+                Returns
+                -------
+                dict    The parsed json data from the necessary data file
+                """
+
+        with open('Data/cookies.json') as cookie_data_file:
+            cookie_data_dict = json.load(cookie_data_file)
+
+        # Cast the necessary data
+        for cookie_type in cookie_data_dict:
+            cookie_type['weight'] = float(cookie_type['weight'])
+            cookie_type['target'] = CookieHuntTarget(cookie_type['target'])
+
+        return cookie_data_dict
+
+    def _get_cookie_weights(self) -> list:
+        """Gets an ordered list of weights mapped to the cookie data dictionary
+
+            Returns
+            -------
+            list    A list of weights
+        """
+        cookie_weights = []
+        for cookie_type in self.cookie_data:
+            cookie_weights.append(cookie_type['weight'])
+
+        return cookie_weights
 
     def _pick_random_channel_to_send(self) -> Optional[TextChannel]:
         """Takes the preconfigured list of available channels that we can drop a cookie into, and returns a possible

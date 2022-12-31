@@ -79,6 +79,10 @@
             "description": "List the users with the most cookies collected."
           }
         ]
+      },
+      {
+        "command": "forceddrop",
+        "description": "Forces a cookie drop immediately and resets the drop randomizer. **Mod roles only**."
       }
     ],
     "diceRoller" : [

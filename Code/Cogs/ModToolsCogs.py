@@ -12,9 +12,9 @@ class WarnAction(Enum):
     """An enumeration class containing all the possible warning actions that can be taken."""
 
     APPLY = 'apply'  # create a warning for a user
-    RESOLVE = 'resolve'  # remove oldest warning
-    UNDO = 'undo'  # remove newest warning
-    VIEW = 'view'  # display warning count
+    RESOLVE = 'resolve'  # remove the oldest warning
+    UNDO = 'undo'  # remove the newest warning
+    VIEW = 'view'  # display the warning count
 
 
 class UserWarnCog(ConfiguredCog):
@@ -50,8 +50,9 @@ class UserWarnCog(ConfiguredCog):
         member_matches = self._find_discord_member(user_name_query)
 
         if not member_matches:
-            await ctx.send(f'No user by the name or id of `{user_name_query}` could be found. '
-                           f'Please check your spelling and try again.')
+            message = ConfiguredCog.dictionary.get_phrase(PhraseMap.NoUserFound)
+            message = message.format(user_name_query=user_name_query)
+            await ctx.send(message)
 
         elif len(member_matches) > 1:
             await ctx.send(self._multi_member_found_message(user_name_query, member_matches))
@@ -64,14 +65,16 @@ class UserWarnCog(ConfiguredCog):
 
             if action == WarnAction.APPLY.value:
                 warning_count = self._warn_member(target_member)
-                message = f'The user "{user_name_query}" has now been warned, for a total of {warning_count} times.'
-            elif action == WarnAction.RESOLVE.value or \
-                    action == WarnAction.UNDO.value:
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UserHasNowBeenWarned)
+                message = message.format(user_name_query=user_name_query, warning_count=warning_count)
+            elif action == WarnAction.RESOLVE.value or action == WarnAction.UNDO.value:
                 warning_count = self._remove_warning(target_member, action)
-                message = f'The user "{user_name_query}" has now been unwarned, they now have {warning_count} warnings.'
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UserHasNowBeenUnwarned)
+                message = message.format(user_name_query=user_name_query, warning_count=warning_count)
             elif action == WarnAction.VIEW.value:
                 warning_count = self._view_user_warnings(target_member)
-                message = f'The user "{user_name_query}" has {warning_count} warnings.'
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UserHasXWarnings)
+                message = message.format(user_name_query=user_name_query, warning_count=warning_count)
             else:
                 message = ConfiguredCog.dictionary.get_phrase(PhraseMap.UnknownCommandOption)
                 message = message.format(option=action)
@@ -245,16 +248,17 @@ class UserWarnCog(ConfiguredCog):
         str     A user-friendly error message reporting all the matches found with the given error message.
         """
 
-        multiple_found_message = f'Multiple users by the identifier "{user_search_query}" were found. Displaying as\n'
-        multiple_found_message += f'*<display name>* (*<account name>*), **id:** *<id>*:\n\n'
+        multiple_found_message = ConfiguredCog.dictionary.get_phrase(PhraseMap.MultipleUsersWithQueryFound)
+        multiple_found_message = multiple_found_message.format(user_search_query=user_search_query)
 
         for member in member_matches:
             uid = member.id
             name = member.name
             display_name = member.display_name
-            multiple_found_message += f'- {display_name} ({name}), **id:** {uid}\n'
+            user_display = ConfiguredCog.dictionary.get_phrase(PhraseMap.MultipleUserDetailedOutput)
+            multiple_found_message += user_display.format(uid=uid, name=name, display_name=display_name)
 
-        multiple_found_message += f'\nPlease try again, using the unique id for the user you wish to warn.'
+        multiple_found_message += ConfiguredCog.dictionary.get_phrase(PhraseMap.PleaseTryAgainUsingUniqueID)
 
         return multiple_found_message
 
@@ -307,22 +311,33 @@ class AutoDrawingPrompt(ConfiguredCog):
         str     The formatted month and day in the format `[Month] [Numeric Day][st|nd|er]`
         """
 
-        month_selector = ["January", "February", "March", "April", "May", "June", "July", "August", "September",
-                          "October", "November", "December"]
+        month_selector = [ConfiguredCog.dictionary.get_phrase(PhraseMap.January),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.February),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.March),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.April),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.May),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.June),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.July),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.August),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.September),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.October),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.November),
+                          ConfiguredCog.dictionary.get_phrase(PhraseMap.December)]
         month_string = month_selector[date.month - 1]
 
         day = date.day
 
         if day == 1 or day == 21 or day == 31:
-            suffix = "st"
+            suffix = ConfiguredCog.dictionary.get_phrase(PhraseMap.OrdinalSt)
         elif day == 2 or day == 22:
-            suffix = "nd"
+            suffix = ConfiguredCog.dictionary.get_phrase(PhraseMap.OrdinalNd)
         elif day == 3 or day == 23:
-            suffix = "rd"
+            suffix = ConfiguredCog.dictionary.get_phrase(PhraseMap.OrdinalRd)
         else:
-            suffix = "th"
+            suffix = ConfiguredCog.dictionary.get_phrase(PhraseMap.OrdinalTh)
 
-        neat_date = f"{month_string} {day}{suffix}"
+        neat_date = ConfiguredCog.dictionary.get_phrase(PhraseMap.ReadableDate)
+        neat_date = neat_date.format(month_string=month_string, day=day, suffix=suffix)
         return neat_date
 
     def _get_daily_drawing_prompt(self) -> str:
@@ -376,7 +391,7 @@ class AutoDrawingPrompt(ConfiguredCog):
                         and isinstance(channel, TextChannel):
                     # Build the prompt message
                     color = ConfiguredCog.convert_color(ConfiguredCog.config['content']['prompt_color'])
-                    title = 'Prompt for today, courtesy of r/SketchDaily'
+                    title = ConfiguredCog.dictionary.get_phrase(PhraseMap.DrawingPromptForToday)
                     url = 'https://reddit.com/r/SketchDaily'
                     description = drawing_prompt
                     message = Embed(color=color, title=title, url=url, description=description)

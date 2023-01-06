@@ -3,6 +3,7 @@ import json
 from enum import Enum
 from random import randint, sample, choices
 from typing import Optional
+import discord.embeds
 from discord.ext import commands, tasks
 from discord import Embed, Message, TextChannel
 from Code.Cogs.Base import ConfiguredCog
@@ -90,7 +91,7 @@ class TagCog(ConfiguredCog):
 
         Parameters
         ----------
-        tag_data:   dict    A dictionary of tags an their data, where the keys are strings referencing the tag's
+        tag_data:   dict    A dictionary of tags and their data, where the keys are strings referencing the tag's
                             name, and the values are dictionaries denoting the data to build the tag.
         tag_name:   str     The key to query in the provided data.
 
@@ -228,7 +229,7 @@ class HelpCog(ConfiguredCog):
         total_pages = len(embed_list)
         page_num = 1
         for embed in embed_list:
-            embed.set_footer(text=f'Page {page_num}/{total_pages}')
+            self._set_page_footer(embed, page_num, total_pages)
             page_num += 1
 
         return embed_list
@@ -256,15 +257,16 @@ class HelpCog(ConfiguredCog):
         for command in enabled_commands:
             # note that the "key" is the `command` part of the helptext, which could have parameters described in it
             # like so: `"warn <action> <user>`", so we only need to validate against the first word of the command
-            # for the user's query. If we succeed, jot down the full key so we can use that from now on.
+            # for the user's query. If we succeed, jot down the full key, so we can use that from now on.
             if command_name == command.split()[0]:
                 full_command_name = command
                 break
 
         if not full_command_name:
             # Command not found, return an error embed to the user
-            embed = Embed(title=command_name, description='Command not found', color=help_dict['color'])
-            embed.set_footer(text='Page 1/1')
+            message_description = ConfiguredCog.dictionary.get_phrase(PhraseMap.CommandNotFound)
+            embed = Embed(title=command_name, description=message_description, color=help_dict['color'])
+            self._set_page_footer(embed, 1, 1)
             embed_list.append(embed)
             return embed_list
 
@@ -275,8 +277,8 @@ class HelpCog(ConfiguredCog):
         for detail in command_data['details']:
             embed.add_field(name=detail['parameter'], value=detail['description'], inline=False)
 
-        # details are not paginated as of yet, so just "pretend" for consistency
-        embed.set_footer(text='Page 1/1')
+        # details are not paginated yet, so just "pretend" for consistency
+        self._set_page_footer(embed, 1, 1)
         embed_list.append(embed)
 
         return embed_list
@@ -311,9 +313,24 @@ class HelpCog(ConfiguredCog):
 
         return enabled_commands
 
+    @staticmethod
+    def _set_page_footer(embed: discord.embeds.Embed, current_page: int, total_pages: int):
+        """Sets the page enumeration footer on the provided embed
+
+        Parameters
+        ----------
+        embed:          discord.embeds.Embed    The embed of which to set the footer
+        current_page:   int                     The "current page" to display in the footer
+        total_pages:    int                     The "total pages" to display in the footer
+        """
+        footer_text = ConfiguredCog.dictionary.get_phrase(PhraseMap.PageXofY)
+        footer_text = footer_text.format(current_page=current_page,
+                                         total_pages=total_pages)
+        embed.set_footer(text=footer_text)
+
     def _get_check_method(self, message: Message, allow_decrease: bool, allow_increase: bool) -> callable([..., bool]):
         """Builds and returns a method that can be plugged into a bot's check functionality.
-           The method's allow_decrease and allow_increase variables will be "baked" into the method before its passed to
+           The method's allow_decrease and allow_increase variables will be "baked" into the method before it's passed to
            the bot, which will be able to alter the flow of functionality when watching for reacts.
 
         Parameters
@@ -442,17 +459,28 @@ class CookieHuntCog(ConfiguredCog):
 
             # Send a message saying they got the cookie
             if cookie_type['target'] == CookieHuntTarget.CLAIMER:
-                await ctx.send(f'{ctx.author.name} got a {cookie_type["name"]} cookie! '
-                               f'They now have {cookie_count} {cookie_grammar_word}.')
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.CookieAwarded)
+                message = message.format(cookie_grabber_name=ctx.author.name,
+                                         cookie_type=cookie_type["name"],
+                                         cookie_count=cookie_count,
+                                         cookie_word=cookie_grammar_word)
+                await ctx.send(message)
             else:
                 target_user = self.bot.get_user(int(target_discord_id))
                 if target_user:
                     target_user_name = target_user.name
                 else:
-                    target_user_name = f'Unknown ({target_discord_id})'
+                    target_user_name = ConfiguredCog.dictionary.get_phrase(PhraseMap.UnknownCookieCollectorName)
+                    target_user_name = target_user_name.format(discord_id=target_discord_id)
 
-                await ctx.send(f'{ctx.author.name} got a {cookie_type["name"]} cookie! '
-                               f'The leader, {target_user_name}, now has {cookie_count} {cookie_grammar_word}.')
+                message = ConfiguredCog.dictionary.get_phrase(PhraseMap.CookieAwardedTargetingLeader)
+                message = message.format(cookie_grabber_name=ctx.author.name,
+                                         cookie_type=cookie_type["name"],
+                                         leader_user_name=target_user_name,
+                                         cookie_count=cookie_count,
+                                         cookie_word=cookie_grammar_word)
+
+                await ctx.send(message)
 
     @commands.command()
     async def sugar(self, ctx: commands.Context, options: str = None):
@@ -656,6 +684,7 @@ class CookieHuntCog(ConfiguredCog):
 
 class DiceRollerCog(ConfiguredCog):
     """A class supporting discord dice rolling features
+
     Methods
     -------
     __init__    Overridden method from ConfiguredCog to set the dice lexer and parser.
@@ -680,7 +709,7 @@ class DiceRollerCog(ConfiguredCog):
             try:
                 step_data, result = parser.parse(lexer.tokenize(dice))
             except TypeError as _:
-                await ctx.send("There was an error with your roll syntax. Please try again.")
+                await ctx.send(ConfiguredCog.dictionary.get_phrase(PhraseMap.ErrorWithYourRoll))
                 return
 
             if result.is_integer():

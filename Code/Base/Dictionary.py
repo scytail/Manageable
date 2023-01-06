@@ -41,6 +41,35 @@ class PhraseMap(Enum):
     AirlockCommandOnlyAvailable = 33
     IssueFindingTheRole = 34
     UserRequestedRelease = 35
+    CookieAwardedTargetingLeader = 36
+    PageXofY = 37
+    CommandNotFound = 38
+    ErrorWithYourRoll = 39
+    NoUserFound = 40
+    UserHasNowBeenWarned = 41
+    UserHasNowBeenUnwarned = 42
+    UserHasXWarnings = 43
+    MultipleUsersWithQueryFound = 44
+    MultipleUserDetailedOutput = 45
+    PleaseTryAgainUsingUniqueID = 46
+    DrawingPromptForToday = 47
+    January = 48
+    February = 49
+    March = 50
+    April = 51
+    May = 52
+    June = 53
+    July = 54
+    August = 55
+    September = 56
+    October = 57
+    November = 58
+    December = 59
+    OrdinalSt = 60
+    OrdinalNd = 61
+    OrdinalRd = 62
+    OrdinalTh = 63
+    ReadableDate = 64
 
 
 class Dictionary:
@@ -97,8 +126,8 @@ class Dictionary:
         -----
         This method runs recursively, meaning that when it loads the parent dictionary's phrases, it will continue to do
         so until it reaches a dictionary that has a parent dictionary of an empty string. Then, it merges the lexicons
-        together, from top-most parent to lowest child, such that any phrases found in a child will always replace the
-        parents' phrases.
+        together, from the top-most parent to the lowest child, such that any phrases found in a child will always
+        replace the parents' phrases.
 
         Parameters
         ----------

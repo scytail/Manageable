@@ -153,7 +153,7 @@ class ConfiguredCog(commands.Cog):
         if color_hex_code is None or (len(color_hex_code) != 4 and len(color_hex_code) != 7):
             return color_hex_code
 
-        color_hex_code = color_hex_code[1:]  # Crop out the hash tag at the start
+        color_hex_code = color_hex_code[1:]  # Crop out the hashtag at the start
         return int(color_hex_code, 16)
 
     def is_cog_enabled(self, cog_name: str) -> Optional[bool]:

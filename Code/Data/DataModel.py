@@ -1,9 +1,11 @@
 from sqlalchemy import create_engine, Column, Integer, ForeignKey, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, DeclarativeBase
 
 engine = create_engine('sqlite:///Data/database.db')
-_Base = declarative_base(bind=engine)
+
+
+class _Base(DeclarativeBase):
+    pass
 
 
 class UserTable(_Base):
@@ -32,4 +34,4 @@ class CookieTable(_Base):
     User = relationship('UserTable', back_populates='Cookie')
 
 
-_Base.metadata.create_all()
+_Base.metadata.create_all(engine)

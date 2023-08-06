@@ -115,7 +115,7 @@ class ConfiguredCog(commands.Cog):
     Methods
     -------
     __init__                Sets up the Cog for general usage.
-    convert_color           A static class method for use processing stringified hex codes into integers.
+    convert_color           A static class method for use processing serialized hex codes into integers.
     find_role_in_guild      Searches for the name of a role in the bot's guild.
     member_contains_role    Checks to see if a given member has a certain role or not.
     """
@@ -135,7 +135,7 @@ class ConfiguredCog(commands.Cog):
 
     @staticmethod
     def convert_color(color_hex_code: str):
-        """A static method used for processing stringified hex codes into integers
+        """A static method used for processing serialized hex codes into integers
 
         Parameters
         ----------
@@ -151,7 +151,7 @@ class ConfiguredCog(commands.Cog):
         if color_hex_code is None or (len(color_hex_code) != 4 and len(color_hex_code) != 7):
             return color_hex_code
 
-        color_hex_code = color_hex_code[1:]  # Crop out the hash tag at the start
+        color_hex_code = color_hex_code[1:]  # Crop out the hashtag at the start
         return int(color_hex_code, 16)
 
     def is_cog_enabled(self, cog_name: str) -> Optional[bool]:

@@ -278,15 +278,16 @@ class AutoDrawingPrompt(ConfiguredCog):
         super().__init__(bot)
         self.current_prompt = ''
 
-        # Start the task
-        self._get_sketch_prompt.start()
-
     @commands.Cog.listener()
     async def on_ready(self):
         """Cog Listener to automatically run the task on start."""
 
-        # Run the task so that we aren't waiting for the task
         await self._get_sketch_prompt()
+
+    async def cog_load(self) -> None:
+        """Overridden from commands.Cog; starts the automated task."""
+
+        self._get_sketch_prompt.start()
 
     def cog_unload(self):
         """Overridden from commands.Cog; stops the automated task."""
@@ -384,3 +385,5 @@ class AutoDrawingPrompt(ConfiguredCog):
 
                     # Note down that we found today's prompt (so as not to re-send it)
                     self.current_prompt = drawing_prompt
+
+                    break

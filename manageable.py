@@ -8,10 +8,14 @@ from Code.Cogs.SystemInteractionCogs import GlobalErrorHandlingCog, RoleRequestC
 import asyncio
 
 
-async def build_discord_bot() -> Bot:
-    # Build the bot
-    Base.ConfiguredCog.logger.info('Constructing Manageable bot...')
-    Base.ConfiguredCog.logger.debug(f'Building bot.')
+def construct_bot() -> Bot:
+    """Constructs a discord bot with the necessary intents
+
+    Returns
+    -------
+    discord.ext.commands.bot.Bot    An initialized, but empty, discord bot.
+    """
+    Base.ConfiguredCog.logger.debug(f'Initializing bot.')
 
     intents = Intents.default()
     intents.members = True  # Among others, the help command needs the members intent to monitor reactions
@@ -19,9 +23,16 @@ async def build_discord_bot() -> Bot:
 
     discord_bot = Bot(Base.ConfiguredCog.config['command_prefix'], help_command=None, intents=intents)
 
-    # Add the necessary cogs
-    Base.ConfiguredCog.logger.info('Attaching functionality...')
+    return discord_bot
 
+
+async def add_cog_functionality(discord_bot: Bot) -> None:
+    """Adds cogs as needed to the provided bot
+
+    Parameters
+    ----------
+    discord_bot:    discord.ext.commands.bot.Bot    The bot to add Cogs to
+    """
     # Do not disable
     Base.ConfiguredCog.logger.debug('Adding GlobalErrorHandling Cog.')
     await discord_bot.add_cog(GlobalErrorHandlingCog(discord_bot))
@@ -86,13 +97,21 @@ async def build_discord_bot() -> Bot:
     else:
         Base.ConfiguredCog.logger.debug('Skipping DiceRoller Cog.')
 
-    return discord_bot
+
+async def main() -> None:
+    """Main entry point of the Manageable system. Should be called only when executing the software."""
+
+    Base.ConfiguredCog.logger.info('Constructing Manageable bot...')
+    bot = construct_bot()
+
+    async with bot:
+        Base.ConfiguredCog.logger.info('Attaching functionality...')
+        await add_cog_functionality(bot)
+
+        # Run the bot
+        Base.ConfiguredCog.logger.warning('Launching Manageable with the specified bot token.')
+        await bot.start(Base.ConfiguredCog.config['token'])
 
 
 if __name__ == '__main__':
-    # Build the bot
-    bot = asyncio.run(build_discord_bot())
-
-    # Run the bot
-    Base.ConfiguredCog.logger.warning('Launching Manageable with the specified bot token.')
-    bot.run(Base.ConfiguredCog.config['token'])
+    asyncio.run(main())

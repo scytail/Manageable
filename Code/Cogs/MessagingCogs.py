@@ -54,8 +54,6 @@ class TagCog(ConfiguredCog):
 
             # Build tag data
             color = ConfiguredCog.convert_color(self._get_tag_data_safe(tag_data, 'color'))
-            if color is None:
-                color = Embed.Empty
 
             title = self._get_tag_data_safe(tag_data, 'title')
             if title is None:
@@ -87,7 +85,7 @@ class TagCog(ConfiguredCog):
 
         Parameters
         ----------
-        tag_data:   dict    A dictionary of tags an their data, where the keys are strings referencing the tag's
+        tag_data:   dict    A dictionary of tags and their data, where the keys are strings referencing the tag's
                             name, and the values are dictionaries denoting the data to build the tag.
         tag_name:   str     The key to query in the provided data.
 
@@ -251,9 +249,9 @@ class HelpCog(ConfiguredCog):
         # Error catching for invalid commands
         full_command_name = None
         for command in enabled_commands:
-            # note that the "key" is the `command` part of the helptext, which could have parameters described in it
+            # note that the "key" is the `command` part of the help text, which could have parameters described in it
             # like so: `"warn <action> <user>`", so we only need to validate against the first word of the command
-            # for the user's query. If we succeed, jot down the full key so we can use that from now on.
+            # for the user's query. If we succeed, jot down the full key, so we can use that from now on.
             if command_name == command.split()[0]:
                 full_command_name = command
                 break
@@ -272,7 +270,7 @@ class HelpCog(ConfiguredCog):
         for detail in command_data['details']:
             embed.add_field(name=detail['parameter'], value=detail['description'], inline=False)
 
-        # details are not paginated as of yet, so just "pretend" for consistency
+        # details are not paginated yet, so just "pretend" for consistency
         embed.set_footer(text='Page 1/1')
         embed_list.append(embed)
 
@@ -310,8 +308,8 @@ class HelpCog(ConfiguredCog):
 
     def _get_check_method(self, message: Message, allow_decrease: bool, allow_increase: bool) -> callable([..., bool]):
         """Builds and returns a method that can be plugged into a bot's check functionality.
-           The method's allow_decrease and allow_increase variables will be "baked" into the method before its passed to
-           the bot, which will be able to alter the flow of functionality when watching for reacts.
+           The method's allow_decrease and allow_increase variables will be "baked" into the method before it's passed
+           to the bot, which will be able to alter the flow of functionality when watching for reacts.
 
         Parameters
         ----------
@@ -367,9 +365,6 @@ class CookieHuntCog(ConfiguredCog):
         self.cookie_drop_delay_hours = None
         self.cookie_drop_delay_minutes = None
         self.cookie_type = None
-
-        # Start the task
-        self._check_to_send_cookie.start()
 
     @commands.command()
     async def gimme(self, ctx: commands.Context):
@@ -552,12 +547,10 @@ class CookieHuntCog(ConfiguredCog):
             else:
                 self.logger.error('No valid channels were found. Skipping drop.')
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        """Cog Listener to prep for a cookie drop on start."""
+    def cog_load(self) -> None:
+        """Overridden from commands.Cog; starts the automated task."""
 
-        # Prepare for a drop
-        self._prep_cookie_drop()
+        self._check_to_send_cookie.start()
 
     def cog_unload(self):
         """Overridden from commands.Cog; stops the automated task."""
@@ -662,7 +655,7 @@ class DiceRollerCog(ConfiguredCog):
 
             try:
                 step_data, result = parser.parse(lexer.tokenize(dice))
-            except TypeError as exception:
+            except TypeError:
                 await ctx.send("There was an error with your roll syntax. Please try again.")
                 return
 

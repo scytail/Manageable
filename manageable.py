@@ -1,19 +1,17 @@
-import discord.ext.commands
 from discord.ext.commands.bot import Bot
 from discord import Intents
 import Code.Cogs.Base as Base
-from Code.Cogs.ModToolsCogs import UserWarnCog, AutoDrawingPrompt
-from Code.Cogs.MessagingCogs import HelpCog, TagCog, CookieHuntCog, DiceRollerCog
-from Code.Cogs.SystemInteractionCogs import GlobalErrorHandlingCog, RoleRequestCog, AirlockCog
+from Code.Cogs.ModTools import UserWarnCog
+from Code.Cogs.SystemInteractions import GlobalErrorHandlingCog, AirlockCog, HelpCog
+from Code.Cogs.UserTools import RoleRequestCog, TagCog
+from Code.Cogs.Toys import CookieHuntCog, DiceRollerCog, AutoDrawingPrompt
 import asyncio
 
 
 def construct_bot() -> Bot:
     """Constructs a discord bot with the necessary intents
 
-    Returns
-    -------
-    discord.ext.commands.bot.Bot    An initialized, but empty, discord bot.
+    :return:    An initialized, but empty, discord bot.
     """
     Base.ConfiguredCog.logger.debug(f'Initializing bot.')
 
@@ -27,11 +25,9 @@ def construct_bot() -> Bot:
 
 
 async def add_cog_functionality(discord_bot: Bot) -> None:
-    """Adds cogs as needed to the provided bot
+    """Adds cogs as needed to the provided bot.
 
-    Parameters
-    ----------
-    discord_bot:    discord.ext.commands.bot.Bot    The bot to add Cogs to
+    :param discord_bot: The bot to add Cogs to.
     """
     # Do not disable
     Base.ConfiguredCog.logger.debug('Adding GlobalErrorHandling Cog.')
@@ -98,7 +94,7 @@ async def add_cog_functionality(discord_bot: Bot) -> None:
         Base.ConfiguredCog.logger.debug('Skipping DiceRoller Cog.')
 
 
-async def main() -> None:
+async def main():
     """Main entry point of the Manageable system. Should be called only when executing the software."""
 
     Base.ConfiguredCog.logger.info('Constructing Manageable bot...')

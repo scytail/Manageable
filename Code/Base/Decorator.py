@@ -11,7 +11,7 @@ class Decorator(object):
     Override :py:meth:`setup`, :py:meth:`run` or :py:meth:`decorate` to create
     custom decorators:
 
-    * :py:meth:`setup` is dedicated to setup, i.e. setting decorator's internal
+    * :py:meth:`setup` is dedicated to set up, i.e. setting decorator's internal
       options.
       :py:meth:`__init__` calls :py:meth:`setup`.
 
@@ -52,8 +52,7 @@ class Decorator(object):
     def decorate(self, func):
         """Remember the function to decorate.
 
-        Raises TypeError if ``func`` is not a callable.
-
+        :raise TypeError: if ``func`` is not a callable.
         """
         if not callable(func):
             raise TypeError('Cannot decorate non callable object "{func}"'

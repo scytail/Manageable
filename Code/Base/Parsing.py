@@ -50,9 +50,7 @@ class DiceParser(Parser):
     def statement(self, p) -> Tuple[list, float]:
         """Exit point of the expression when everything else is evaluated.
 
-        Returns
-        -------
-        Tuple[list, float]  a tuple with a list of the steps and the final value
+        :return:    A tuple with a list of the steps and the final value.
         """
 
         return_data = (self.step_log, float(p.expr))

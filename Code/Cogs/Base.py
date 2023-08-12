@@ -2,7 +2,7 @@ import json
 import logging
 from discord import Role, Guild, Member
 from discord.ext import commands
-from typing import Optional
+from typing import Optional, Union
 
 # The config file to load data from.
 CONFIG_FILE = 'Config/config.json'
@@ -11,13 +11,9 @@ CONFIG_FILE = 'Config/config.json'
 def build_logger(enable_debug: bool) -> logging.Logger:
     """Builds a logger instance that is used for various system logging.
 
-    Parameters
-    ----------
-    enable_debug:   bool    A boolean toggle of whether to enable debug messages to get logged or not.
+    :param enable_debug:    A boolean toggle of whether to enable debug messages to get logged or not.
 
-    Returns
-    -------
-    logging.Logger  The configured logger instance that can be logged to.
+    :return:    The configured logger instance that can be logged to.
     """
 
     # Set lowest logging level
@@ -52,17 +48,11 @@ def build_logger(enable_debug: bool) -> logging.Logger:
 def load_config(filename: str) -> dict:
     """Loads the specified json config file into memory for usage.
 
-    Parameters
-    ----------
-    filename:   str     A valid path and filename from which the json configuration will be loaded.
+    :param filename:    A valid path and filename from which the json configuration will be loaded.
 
-    Returns
-    -------
-    dict    A dictionary parsed directly from the JSON file
+    :return:    A dictionary parsed directly from the JSON file
 
-    Exceptions
-    ----------
-    ValueError  if the filename is empty or not a valid string, this method will throw a value error
+    :except ValueError: if the filename is empty or not a valid string.
     """
 
     if filename is None or filename == '' or type(filename) is not str:
@@ -77,15 +67,11 @@ def load_config(filename: str) -> dict:
 def is_cog_enabled(cog_name: str, config_dict: dict) -> Optional[bool]:
     """Checks to see if the given cog name is enabled in the provided dictionary
 
-    Parameters
-    ----------
-    cog_name        str     The name of the cog to validate in the config
-    config_dict     dict    The config dictionary to check enabled settings
+    :param cog_name:    The name of the cog to validate in the config.
+    :param config_dict: The config dictionary to check enabled settings
 
-    Returns
-    -------
-    Optional[bool]  Returns true if true in the dictionary, or false for anything else. If it cannot find the data in
-                    the provided config, returns None.
+    :return:    Returns true if true in the dictionary, or false for anything else. If it cannot find the data in the
+    provided config, returns None.
     """
 
     if 'features' not in config_dict['content'] or \
@@ -104,20 +90,9 @@ def is_cog_enabled(cog_name: str, config_dict: dict) -> Optional[bool]:
 class ConfiguredCog(commands.Cog):
     """A Base class containing some general data and methods for all the implemented Cogs to use.
 
-    Class Variables
-    ---------------
-    config: dict    Builds the configuration dictionary on import so that it's easily accessible.
-
-    Instance Variables
-    ------------------
-    bot:    discord.ext.commands.Bot    A discord bot instance for self-referential purposes.
-
-    Methods
-    -------
-    __init__                Sets up the Cog for general usage.
-    convert_color           A static class method for use processing serialized hex codes into integers.
-    find_role_in_guild      Searches for the name of a role in the bot's guild.
-    member_contains_role    Checks to see if a given member has a certain role or not.
+    :var config:    The configuration dictionary, built on import, so that it's easily accessible.
+    :var logger:    The logger, built on import, used for logging events that occur within a cog.
+    :var bot:       A discord bot instance for self-referential purposes.
     """
 
     config: dict = load_config(CONFIG_FILE)
@@ -126,26 +101,20 @@ class ConfiguredCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         """Initializes the Base class for usage
 
-        Parameters
-        ----------
-        bot:    discord.ext.commands.Bot    A discord bot instance which will be saved within the class instance.
+        :param bot: A discord bot instance which will be saved within the class instance.
         """
 
         self.bot: commands.Bot = bot
 
     @staticmethod
-    def convert_color(color_hex_code: str):
+    def convert_color(color_hex_code: Union[str, None]) -> Union[int, str, None]:
         """A static method used for processing serialized hex codes into integers
 
-        Parameters
-        ----------
-        color_hex_code: str     A hex code to parse. Can also be `None`.
+        :param color_hex_code: A hex code to parse or `None`.
 
-        Returns
-        -------
-        int     If the hex code is a string that is 4 or 7 characters long (with the first character being a #),
-                it will return that as an integer.
-        Object  If the hex code does not meet the conditionals above, it will return the argument as passed in
+        :return:    If the hex code is a string that is 4 or 7 characters long (with the first character being a #), it
+                    will return that as an integer. If the hex code does not meet the conditionals above, it will return
+                    the argument as passed in.
         """
 
         if color_hex_code is None or (len(color_hex_code) != 4 and len(color_hex_code) != 7):
@@ -157,14 +126,10 @@ class ConfiguredCog(commands.Cog):
     def is_cog_enabled(self, cog_name: str) -> Optional[bool]:
         """Exposes base methodology of is_cog_enabled in the class structure, using the class's embedded config.
 
-        Parameters
-        ----------
-        cog_name    str     The cog to check if enabled
+        :param cog_name:    The cog to check if enabled
 
-        Returns
-        -------
-        Optional[bool]  Returns true if true in the dictionary, or false for anything else. If it cannot find the data
-                        in the provided config, returns None.
+        :return: Returns true if true in the dictionary, or false for anything else. If it cannot find the data in the
+                 provided config, returns None.
         """
         return is_cog_enabled(cog_name, self.config)
 
@@ -172,19 +137,13 @@ class ConfiguredCog(commands.Cog):
     def find_role_in_guild(role_name_query: str, guild: Guild) -> Optional[Role]:
         """Finds a role with the provided name in a guild.
 
-        Notes
-        -----
         Please note that this will find the first (lowest) role with the provided name. Be careful if the guild has
-        multiple roles with the same role name. Also keep in mind that the role search IS case sensitive.
+        multiple roles with the same role name. Also keep in mind that the role search *is* case-sensitive.
 
-        Parameters
-        ----------
-        role_name_query:    str             The name of the role to search the guild for
-        guild:              discord.Guild   The guild to validate the role name against
+        :param role_name_query: The name of the role to search the guild for
+        :param guild:           The guild to validate the role name against
 
-        Returns
-        -------
-        Optional[Role]  Returns the role in the class, or None if no role exists in the guild
+        :return:    Returns the role in the class, or None if no role exists in the guild
         """
         for role in guild.roles:
             if role.name == role_name_query:
@@ -198,14 +157,10 @@ class ConfiguredCog(commands.Cog):
     def member_contains_role(role_name_query: str, member: Member) -> bool:
         """Validates that the provided member has a role with the given name.
 
-        Parameters
-        ----------
-        role_name_query:    str             The name of the role to search the guild for
-        member:             discord.Member  The guild to validate the role name against
+        :param role_name_query: The name of the role to search the guild for
+        :param member:          discord.Member  The guild to validate the role name against
 
-        Returns
-        -------
-        bool    Returns True if the member contains the role, or False otherwise
+        :return:    True if the member contains the role, or False otherwise
         """
         for role in member.roles:
             if role.name == role_name_query:

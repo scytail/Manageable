@@ -6,9 +6,9 @@ from random import randint, sample, choices
 from typing import Optional
 from discord.ext import commands, tasks
 from discord import Embed, TextChannel
-from Code.Cogs.Base import ConfiguredCog
-from Code.Data import DataAccess
-from Code.Base.Parsing import DiceLexer, DiceParser
+from code.cogs.base import ConfiguredCog
+from code.data import DataAccess
+from code.base.Parsing import DiceLexer, DiceParser
 
 
 class CookieHuntSugarOptions(Enum):
@@ -24,6 +24,8 @@ class CookieHuntTarget(Enum):
 
 class CookieHuntCog(ConfiguredCog):
     """A class supporting the "Cookie Hunt" feature, including the `gimme` and `sugar` commands."""
+
+    config_name = 'cookieHunt'
 
     def __init__(self, bot: commands.Bot):
         """Initializes the cog and starts the automated task.
@@ -253,7 +255,7 @@ class CookieHuntCog(ConfiguredCog):
         :return:    The parsed json data from the necessary data file
         """
 
-        with open('Data/cookies.json') as cookie_data_file:
+        with open('data/cookies.json') as cookie_data_file:
             cookie_data_dict = json.load(cookie_data_file)
 
         # Cast the necessary data
@@ -297,6 +299,8 @@ class CookieHuntCog(ConfiguredCog):
 
 class DiceRollerCog(ConfiguredCog):
     """A class supporting discord dice rolling features"""
+
+    config_name = 'diceRoller'
 
     @commands.command()
     async def roll(self, ctx: commands.context, dice: str):
@@ -345,8 +349,10 @@ class DiceRollerCog(ConfiguredCog):
         return await self.roll(ctx, text)
 
 
-class AutoDrawingPrompt(ConfiguredCog):
+class AutoDrawingPromptCog(ConfiguredCog):
     """A class supporting the Drawing Prompt automatic posting functionality"""
+
+    config_name = 'autoDrawingPrompt'
 
     def __init__(self, bot: commands.Bot):
         """Initializes the cog and starts the automated task

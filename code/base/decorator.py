@@ -1,18 +1,21 @@
+"""Constructs specialized decorators"""
 # Originally engineered by Benoît Bryon
-# Source addressed here: https://tech.people-doc.com/python-class-based-decorators.html#the-decorator-class
+# Source addressed here:
+# https://tech.people-doc.com/
+#   python-class-based-decorators.html#the-decorator-class
 
 # Sentinel to detect undefined function argument.
 UNDEFINED_FUNCTION = object()
 
 
-class Decorator(object):
+class Decorator:
     """Base class to easily create convenient decorators.
 
     Override :py:meth:`setup`, :py:meth:`run` or :py:meth:`decorate` to create
     custom decorators:
 
-    * :py:meth:`setup` is dedicated to set up, i.e. setting decorator's internal
-      options.
+    * :py:meth:`setup` is dedicated to set up, i.e. setting decorator's
+      internal options.
       :py:meth:`__init__` calls :py:meth:`setup`.
 
     * :py:meth:`decorate` is dedicated to wrapping function, i.e. remember the
@@ -30,7 +33,7 @@ class Decorator(object):
     :py:meth:`run` instead of :py:meth:`__call__`.
 
     """
-    def __init__(self, func=UNDEFINED_FUNCTION, *args, **kwargs):
+    def __init__(self, func=UNDEFINED_FUNCTION, **kwargs):
         """Constructor.
 
         Accepts one optional positional argument: the function to decorate.
@@ -43,10 +46,11 @@ class Decorator(object):
         """
         self.options = {}
 
-        self.setup(*args, **kwargs)
+        self.setup(**kwargs)
         self.decorated = UNDEFINED_FUNCTION
         if func is not UNDEFINED_FUNCTION:
-            # The first (implicit) argument passed by python on init for decorators is the function to decorate
+            # The first (implicit) argument passed by python on init for
+            # decorators is the function to decorate
             self.decorate(func)
 
     def decorate(self, func):
@@ -55,12 +59,11 @@ class Decorator(object):
         :raise TypeError: if ``func`` is not a callable.
         """
         if not callable(func):
-            raise TypeError('Cannot decorate non callable object "{func}"'
-                            .format(func=func))
+            raise TypeError(f'Cannot decorate non callable object "{func}"')
         self.decorated = func
         return self
 
-    def setup(self, *args, **kwargs):
+    def setup(self, **kwargs):
         """Store decorator's options"""
         self.options = kwargs
         return self
@@ -68,8 +71,8 @@ class Decorator(object):
     def __call__(self, *args, **kwargs):
         """Run decorated function if available, else decorate first arg."""
         if self.decorated is UNDEFINED_FUNCTION:
-            # This code path is run when we call the class initialization within the decorator
-            # (i.e. the decorator has parentheses)
+            # This code path is run when we call the class initialization
+            # within the decorator (i.e. the decorator has parentheses)
             func = args[0]
             if args[1:] or kwargs:
                 raise ValueError('Cannot decorate and setup simultaneously '
@@ -78,10 +81,11 @@ class Decorator(object):
                                  'decorate() to decorate.')
             self.decorate(func)
             return self
-        else:
-            # This code path is run when we build the decorator "on the fly," because we've already run decorate in init
-            # (i.e. when the decorator doesn't have parentheses)
-            return self.run(*args, **kwargs)
+
+        # This code path is run when we build the decorator "on the fly,"
+        # because we've already run decorate in init
+        # (i.e. when the decorator doesn't have parentheses)
+        return self.run(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         """Actually run the decorator.

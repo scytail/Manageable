@@ -1,8 +1,8 @@
 from datetime import datetime
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.orm.query import Query
-from Code.Data.DataModel import engine, UserTable, WarningTable, CookieTable
-from Code.Base.Decorator import Decorator
+from code.data.DataModel import engine, UserTable, WarningTable, CookieTable
+from code.base.decorator import Decorator
 
 SessionObject = sessionmaker(bind=engine)
 

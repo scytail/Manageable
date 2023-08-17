@@ -1,7 +1,7 @@
 from enum import Enum
 from discord.ext import commands
 from discord import Role, Embed
-from Code.Cogs.Base import ConfiguredCog
+from code.cogs.base import ConfiguredCog
 from typing import Union
 
 
@@ -15,6 +15,8 @@ class RequestAction(Enum):
 
 class RoleRequestCog(ConfiguredCog):
     """A Cog class meant to add and remove roles from users that request them."""
+
+    config_name = 'role'
 
     @commands.command()
     async def role(self, ctx: commands.Context, action: str, *target_role_list: str):
@@ -98,6 +100,8 @@ class RoleRequestCog(ConfiguredCog):
 
 class TagCog(ConfiguredCog):
     """A class supporting the `tag` command functionality."""
+
+    config_name = 'tag'
 
     @commands.command()
     async def tag(self, ctx: commands.Context, tag_name: Union[str, None] = None):

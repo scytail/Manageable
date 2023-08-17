@@ -1,3 +1,5 @@
+# pylint: skip-file
+"""A Module for constructing and parsing the dice rolling language."""
 from sly import Lexer, Parser
 from random import randint
 from typing import Tuple

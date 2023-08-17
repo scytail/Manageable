@@ -2,8 +2,8 @@ from enum import Enum
 from datetime import datetime, timedelta
 from discord import Member
 from discord.ext import commands
-from Code.Cogs.Base import ConfiguredCog
-from Code.Data import DataAccess
+from code.cogs.base import ConfiguredCog
+from code.data import DataAccess
 
 
 class WarnAction(Enum):
@@ -17,6 +17,8 @@ class WarnAction(Enum):
 
 class UserWarnCog(ConfiguredCog):
     """A class supporting the warning functionality."""
+
+    config_name = 'warn'
 
     @commands.command()
     @commands.has_any_role(*ConfiguredCog.config['mod_roles'])

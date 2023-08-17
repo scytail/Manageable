@@ -5,7 +5,7 @@ import traceback
 import discord
 from discord.ext import commands
 from discord import Message, Embed
-from Code.Cogs.Base import ConfiguredCog
+from code.cogs.base import ConfiguredCog
 from typing import Union
 
 
@@ -51,6 +51,8 @@ class GlobalErrorHandlingCog(ConfiguredCog):
 
 class AirlockCog(ConfiguredCog):
     """A class supporting the airlock functionality (including the `accept` command)."""
+
+    config_name = 'airlock'
 
     @commands.command()
     async def accept(self, ctx: commands.context):
@@ -158,7 +160,7 @@ class HelpCog(ConfiguredCog):
                     with some processing done to a few color fields.
         """
 
-        with open('Data/helptext.json') as help_text_file:
+        with open('data/helptext.json') as help_text_file:
             help_text_dict = json.load(help_text_file)
             help_text_dict['color'] = ConfiguredCog.convert_color(help_text_dict['color'])
 

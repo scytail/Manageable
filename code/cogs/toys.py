@@ -6,12 +6,12 @@ from enum import Enum
 from random import randint, sample, choices
 from typing import Optional
 
-from discord.ext import commands, tasks
-from discord import Embed, TextChannel
-
 from code.cogs.base import ConfiguredCog
 from code.data import data_access
 from code.base.parsing import DiceLexer, DiceParser
+
+from discord.ext import commands, tasks
+from discord import Embed, TextChannel
 
 
 class CookieHuntSugarOptions(Enum):
@@ -278,13 +278,13 @@ class CookieHuntCog(ConfiguredCog):
                 self.logger.error('No valid channels were found. '
                                   'Skipping drop.')
 
-    def cog_load(self) -> None:
+    async def cog_load(self):
         """Overridden from commands.Cog; starts the automated task."""
 
         # pylint: disable-msg=E1101
         self._check_to_send_cookie.start()
 
-    def cog_unload(self):
+    async def cog_unload(self):
         """Overridden from commands.Cog; stops the automated task."""
 
         # pylint: disable-msg=E1101
@@ -452,7 +452,7 @@ class AutoDrawingPromptCog(ConfiguredCog):
         # pylint: disable-msg=E1101
         self._get_sketch_prompt.start()
 
-    def cog_unload(self):
+    async def cog_unload(self):
         """Overridden from commands.Cog; stops the automated task."""
 
         # pylint: disable-msg=E1101

@@ -2,15 +2,15 @@
 import asyncio
 from typing import TypeVar
 
-from discord.ext.commands.bot import Bot
-from discord import Intents
-
 from code.cogs import base
 from code.cogs.mod_tools import UserWarnCog
-from code.cogs.system_interactions import GlobalErrorHandlingCog, AirlockCog, \
-     HelpCog
+from code.cogs.system_interactions import (GlobalErrorHandlingCog, AirlockCog,
+                                           HelpCog)
 from code.cogs.user_tools import RoleRequestCog, TagCog
 from code.cogs.toys import CookieHuntCog, DiceRollerCog, AutoDrawingPromptCog
+
+from discord.ext.commands.bot import Bot
+from discord import Intents
 
 
 def construct_bot() -> Bot:

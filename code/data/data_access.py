@@ -3,11 +3,11 @@
 from datetime import datetime
 from typing import Union
 
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.orm.query import Query
-
 from code.data.data_model import engine, UserTable, WarningTable, CookieTable
 from code.base.decorator import Decorator
+
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm.query import Query
 
 SessionObject = sessionmaker(bind=engine)
 

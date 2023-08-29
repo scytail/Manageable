@@ -2,11 +2,11 @@
 from enum import Enum
 from datetime import datetime, timedelta
 
-from discord import Member
-from discord.ext import commands
-
 from code.cogs.base import ConfiguredCog
 from code.data import data_access
+
+from discord import Member
+from discord.ext import commands
 
 
 class WarnAction(Enum):

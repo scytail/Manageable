@@ -2,12 +2,12 @@
 import datetime
 import json
 import traceback
+from typing import Union
+
+from code.cogs.base import ConfiguredCog
 
 from discord.ext import commands
 from discord import Message, Embed, Reaction, ClientUser
-
-from code.cogs.base import ConfiguredCog
-from typing import Union
 
 
 class GlobalErrorHandlingCog(ConfiguredCog):

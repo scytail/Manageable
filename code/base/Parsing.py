@@ -1,4 +1,4 @@
-# pylint: skip-file
+# pylint: disable=W,C,R,E
 """A Module for constructing and parsing the dice rolling language."""
 from sly import Lexer, Parser
 from random import randint

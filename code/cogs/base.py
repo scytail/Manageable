@@ -38,7 +38,8 @@ def build_logger(enable_debug: bool) -> logging.Logger:
 
     # Create console logger
     console_logger = logging.StreamHandler()
-    console_logger.setLevel(logging.WARNING)  # console output should only be important information
+    # console output should only be important information
+    console_logger.setLevel(logging.WARNING)
     console_logger.setFormatter(formatter)
 
     # Add the handlers to the logger
@@ -121,11 +122,11 @@ class ConfiguredCog(commands.Cog):
         self.bot: commands.Bot = bot
 
     @staticmethod
-    def convert_color(color_hex_code: Union[str, None]) -> Union[int, str, None]:
+    def convert_color(color_code: Union[str, None]) -> Union[int, str, None]:
         """A static method used for processing serialized hex codes into
         integers.
 
-        :param color_hex_code: A hex code to parse or `None`.
+        :param color_code: A hex code to parse or `None`.
 
         :return:    If the hex code is a string that is 4 or 7 characters long
                     (with the first character being a #), it will return that
@@ -134,13 +135,13 @@ class ConfiguredCog(commands.Cog):
                     in.
         """
 
-        if color_hex_code is None or \
-                (len(color_hex_code) != 4 and len(color_hex_code) != 7):
-            return color_hex_code
+        if (color_code is None or
+                (len(color_code) != 4 and len(color_code) != 7)):
+            return color_code
 
         # Crop out the hashtag at the start
-        color_hex_code = color_hex_code[1:]
-        return int(color_hex_code, 16)
+        color_code = color_code[1:]
+        return int(color_code, 16)
 
     def is_cog_enabled(self, cog_name: str) -> Optional[bool]:
         """Exposes base methodology of is_cog_enabled in the class structure,

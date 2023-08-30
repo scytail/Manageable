@@ -1,11 +1,11 @@
-# pylint: disable=W,C,R,E
 """A Module for constructing and parsing the dice rolling language."""
-from sly import Lexer, Parser
 from random import randint
 from typing import Tuple
 from math import ceil
 
+from sly import Lexer, Parser
 
+# pylint: disable=W,C,R,E
 class DiceLexer(Lexer):
     tokens = {NUMBER, PLUS, MINUS, TIMES, DIVIDE, LEFT_PARENTHESES, RIGHT_PARENTHESES, DIE_ROLL}
     ignore = ' \t'
@@ -32,7 +32,7 @@ class DiceLexer(Lexer):
     def error(self, t):
         self.index += 1
 
-
+# pylint: disable=W,C,R,E
 class DiceParser(Parser):
     tokens = DiceLexer.tokens
 

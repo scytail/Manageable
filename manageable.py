@@ -2,12 +2,12 @@
 import asyncio
 from typing import TypeVar
 
-from code.cogs import base
-from code.cogs.mod_tools import UserWarnCog
-from code.cogs.system_interactions import (GlobalErrorHandlingCog, AirlockCog,
-                                           HelpCog)
-from code.cogs.user_tools import RoleRequestCog, TagCog
-from code.cogs.toys import CookieHuntCog, DiceRollerCog, AutoDrawingPromptCog
+from src.cogs import base
+from src.cogs.mod_tools import UserWarnCog
+from src.cogs.system_interactions import (GlobalErrorHandlingCog, AirlockCog,
+                                          HelpCog)
+from src.cogs.user_tools import RoleRequestCog, TagCog
+from src.cogs.toys import CookieHuntCog, DiceRollerCog, AutoDrawingPromptCog
 
 from discord.ext.commands.bot import Bot
 from discord import Intents

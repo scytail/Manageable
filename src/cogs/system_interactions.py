@@ -4,7 +4,7 @@ import json
 import traceback
 from typing import Union
 
-from code.cogs.base import ConfiguredCog
+from src.cogs.base import ConfiguredCog
 
 from discord.ext import commands
 from discord import Message, Embed, Reaction, ClientUser
@@ -58,7 +58,7 @@ class GlobalErrorHandlingCog(ConfiguredCog):
         self.logger.error('Skipping exception in command %s: %s',
                           command,
                           exception)
-        self.logger.info(traceback.format_exc())
+        self.logger.debug(traceback.format_exc())
         return await ctx.send('An internal error occurred while processing '
                               'your command.')
 
@@ -175,8 +175,8 @@ class HelpCog(ConfiguredCog):
             check_method = self._get_check_method(message,
                                                   allow_decrease,
                                                   allow_increase)
-            react = await self.bot.wait_for('reaction_add',
-                                            check=check_method)
+            react, _ = await self.bot.wait_for('reaction_add',
+                                               check=check_method)
             if react.emoji == self._left:
                 index -= 1
             elif react.emoji == self._right:

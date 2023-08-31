@@ -3,8 +3,8 @@
 from datetime import datetime
 from typing import Union
 
-from code.data.data_model import engine, UserTable, WarningTable, CookieTable
-from code.base.decorator import Decorator
+from src.data.data_model import engine, UserTable, WarningTable, CookieTable
+from src.base.decorator import Decorator
 
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.orm.query import Query

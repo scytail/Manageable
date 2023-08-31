@@ -6,9 +6,9 @@ from enum import Enum
 from random import randint, sample, choices
 from typing import Optional
 
-from code.cogs.base import ConfiguredCog
-from code.data import data_access
-from code.base.parsing import DiceLexer, DiceParser
+from src.cogs.base import ConfiguredCog
+from src.data import data_access
+from src.base.parsing import DiceLexer, DiceParser
 
 from discord.ext import commands, tasks
 from discord import Embed, TextChannel

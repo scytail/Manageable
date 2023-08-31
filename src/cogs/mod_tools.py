@@ -2,8 +2,8 @@
 from enum import Enum
 from datetime import datetime, timedelta
 
-from code.cogs.base import ConfiguredCog
-from code.data import data_access
+from src.cogs.base import ConfiguredCog
+from src.data import data_access
 
 from discord import Member
 from discord.ext import commands

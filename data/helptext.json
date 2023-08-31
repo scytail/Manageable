@@ -81,7 +81,7 @@
         ]
       },
       {
-        "command": "forceddrop",
+        "command": "forcedrop",
         "description": "Forces a cookie drop immediately and resets the drop randomizer. **Mod roles only**."
       }
     ],

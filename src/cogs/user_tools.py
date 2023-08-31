@@ -2,10 +2,10 @@
 from enum import Enum
 from typing import Union
 
-from src.cogs.base import ConfiguredCog
-
 from discord.ext import commands
 from discord import Role, Embed
+
+from src.cogs.base import ConfiguredCog
 
 
 class RequestAction(Enum):

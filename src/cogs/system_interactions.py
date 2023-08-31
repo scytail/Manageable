@@ -4,10 +4,10 @@ import json
 import traceback
 from typing import Union
 
-from src.cogs.base import ConfiguredCog
-
 from discord.ext import commands
 from discord import Message, Embed, Reaction, ClientUser
+
+from src.cogs.base import ConfiguredCog
 
 
 class GlobalErrorHandlingCog(ConfiguredCog):
